@@ -1,13 +1,12 @@
-#include <Arduino.h>
 #include "main.h"
 #include "LightCluster.h"
 
-#define LED_PIN    4
-#define NUM_LEDS 10
-
 Adafruit_NeoPixel leds(NUM_LEDS, LED_PIN, NEO_WRGB + NEO_KHZ800);
 
-LightCluster clusters[] = {};
+//LightCluster clusters[] = {};
+light lampsInCluster1[7] = {{0,0},{1,0},{2,0},{3,0},{4,0},{5,0},{6,0}};
+
+LightCluster myCluster(lampsInCluster1, 7, 0);
 
 void setup() {
     // write your initialization code here
@@ -15,11 +14,17 @@ void setup() {
     delay(1000);
     leds.begin();
     leds.clear();
+
+    Serial.println("Started");
+
+    //int lampsInCluster1[] = {0,1,2,3,4,5,6,7,8,9};
+    //clusters[0] = LightCluster(lampsInCluster1, 0);
+    Serial.println("Cluster made");
+
 }
 
 void loop() {
-
-    leds.clear();
+    /*leds.clear();
     delay(1000);
     for (int i = 0; i < 360; i++) {
         for (int light = 0; light < NUM_LEDS; light++) {
@@ -50,5 +55,15 @@ void loop() {
         }
         leds.show();
         delay(1000);
-    }
+    }*/
+//    Serial.println("In loop");
+//    delay(1000);
+//    Serial.println("In loop2");
+    myCluster.runAnimation();
+    //if (hasRun) {
+      //  Serial.println("Running show");
+      //  leds.show();
+   // }
+   leds.show();
+   delay(1);
 }

@@ -1,33 +1,33 @@
 //
 // Created by emilr on 2022-04-13.
 //
-
-#include "Animations.h"
+#include "stdint.h"
 
 #ifndef UNTITLED_LIGHTCLUSTER_H
 #define UNTITLED_LIGHTCLUSTER_H
 
+struct light {
+    int mapped;
+    uint32_t color;
+};
 
 class LightCluster {
+private:
+    long lastRun;
+
+    void runSetup();
+    bool shouldRun();
+
 public:
     int numLights;
     int animationNumber;
 
     void runAnimation();
-    void changeAnimation();
-    bool shouldRun();
+    void changeAnimation(int newAnimationNumber);
 
-    LightCluster(int *lights, int animation);
+    LightCluster(light *incomingLights, int size, int animation);
 
-
-
-private:
-    long lastRun;
-    Animations LocalAnimation;
-
-    void runSetup();
-
-    int mappedLightTable[];
+    light * lights;
 };
 
 
