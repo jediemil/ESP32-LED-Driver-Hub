@@ -1,11 +1,13 @@
 #include <Arduino.h>
-#include "../.pio/libdeps/esp32doit-devkit-v1/Adafruit NeoPixel/Adafruit_NeoPixel.h"
+#include "main.h"
+#include "LightCluster.h"
 
 #define LED_PIN    4
 #define NUM_LEDS 10
 
 Adafruit_NeoPixel leds(NUM_LEDS, LED_PIN, NEO_WRGB + NEO_KHZ800);
 
+LightCluster clusters[] = {};
 
 void setup() {
     // write your initialization code here
@@ -21,7 +23,7 @@ void loop() {
     delay(1000);
     for (int i = 0; i < 360; i++) {
         for (int light = 0; light < NUM_LEDS; light++) {
-            leds.setPixelColor(light, leds.ColorHSV(((light*360/10)+i)*360, 255, 255));
+            leds.setPixelColor(light, leds.ColorHSV(((light * 360 / 10) + i) * 360, 255, 255));
         }
         leds.show();
         delay(200);
