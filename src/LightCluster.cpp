@@ -47,7 +47,7 @@ void LightCluster::changeAnimation(int newAnimationNumber) {
     runAnimation();
 }
 
-LightCluster::LightCluster(light *incomingLights, int size, int animation) {
+LightCluster::LightCluster(struct light *incomingLights, int size, int animation) {
 //    for (int i = 0; i < sizeof(lights); i++) {
 //        light data;
 //        data.mapped = lights[i];
@@ -57,7 +57,7 @@ LightCluster::LightCluster(light *incomingLights, int size, int animation) {
     numLights = size;
     numLeds = size;
     lights = incomingLights;
-
+    lastRun = 0;
 
     runSetup();
     runAnimation();

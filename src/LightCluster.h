@@ -13,7 +13,7 @@ struct light {
 
 class LightCluster {
 private:
-    long lastRun;
+    unsigned long lastRun;
 
     void runSetup();
     bool shouldRun();
@@ -25,9 +25,9 @@ public:
     void runAnimation();
     void changeAnimation(int newAnimationNumber);
 
-    LightCluster(light *incomingLights, int size, int animation);
+    LightCluster(struct light *incomingLights, int size, int animation);
 
-    light * lights;
+    struct light *lights;
 };
 
 

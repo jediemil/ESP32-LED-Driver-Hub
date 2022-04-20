@@ -1,6 +1,18 @@
 #include "main.h"
 #include "LightCluster.h"
 
+#include <WiFi.h>
+#include <../.pio/libdeps/esp32doit-devkit-v1/AsyncTCP/src/AsyncTCP.h>
+#include "../.pio/libdeps/esp32doit-devkit-v1/ESP Async WebServer/src/ESPAsyncWebServer.h"
+#include "FS.h"
+#include "SD.h"
+#include "SPI.h"
+
+const char* ssid = "REPLACE_WITH_YOUR_SSID";
+const char* password = "REPLACE_WITH_YOUR_PASSWORD";
+AsyncWebServer server(80);
+
+
 Adafruit_NeoPixel leds(NUM_LEDS, LED_PIN, NEO_WRGB + NEO_KHZ800);
 
 //LightCluster clusters[] = {};
@@ -8,9 +20,64 @@ light lampsInCluster1[7] = {{0,0},{1,0},{2,0},{3,0},{4,0},{5,0},{6,0}};
 
 LightCluster myCluster(lampsInCluster1, 7, 0);
 
+void connectWiFi() {
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, password);
+    Serial.print("Connecting to WiFi ..");
+    while (WiFi.status() != WL_CONNECTED) {
+        Serial.print('.');
+        delay(1000);
+    }
+    Serial.println(WiFi.localIP());
+}
+
+void connectSDCard(){
+    if(!SD.begin()){
+        Serial.println("Card Mount Failed");
+        return;
+    }
+    uint8_t cardType = SD.cardType();
+
+    if(cardType == CARD_NONE){
+        Serial.println("No SD card attached");
+        return;
+    }
+
+    Serial.print("SD Card Type: ");
+    if(cardType == CARD_MMC){
+        Serial.println("MMC");
+    } else if(cardType == CARD_SD){
+        Serial.println("SDSC");
+    } else if(cardType == CARD_SDHC){
+        Serial.println("SDHC");
+    } else {
+        Serial.println("UNKNOWN");
+    }
+    uint64_t cardSize = SD.cardSize() / (1024 * 1024);
+    Serial.printf("SD Card Size: %lluMB\n", cardSize);
+}
+
+void setupServer() {
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(SD, "/index.html", "text/html");
+    });
+
+    server.serveStatic("/", SD, "/");
+
+    server.on("/api/create_cluster", HTTP_POST, [](AsyncWebServerRequest *request) {
+        String lightString = request->getHeader("lights")->toString();
+    });
+}
+
 void setup() {
     // write your initialization code here
     Serial.begin(115000);
+
+    connectSDCard();
+    connectWiFi();
+    setupServer();
+    server.begin();
+
     delay(1000);
     leds.begin();
     leds.clear();
@@ -56,14 +123,7 @@ void loop() {
         leds.show();
         delay(1000);
     }*/
-//    Serial.println("In loop");
-//    delay(1000);
-//    Serial.println("In loop2");
     myCluster.runAnimation();
-    //if (hasRun) {
-      //  Serial.println("Running show");
-      //  leds.show();
-   // }
-   leds.show();
-   delay(1);
+    leds.show();
+    delay(1);
 }
