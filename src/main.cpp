@@ -4,19 +4,21 @@
 #include <WiFi.h>
 #include <../.pio/libdeps/esp32doit-devkit-v1/AsyncTCP/src/AsyncTCP.h>
 #include "../.pio/libdeps/esp32doit-devkit-v1/ESP Async WebServer/src/ESPAsyncWebServer.h"
-#include "FS.h"
 #include "SD.h"
-#include "SPI.h"
+#include <../.pio/libdeps/esp32doit-devkit-v1/IRremote/src/IRremote.hpp>
+
+#define IR_RECEIVE_PIN 15
+
+uint32_t lastIrReceive = 0;
 
 const char* ssid = "REPLACE_WITH_YOUR_SSID";
 const char* password = "REPLACE_WITH_YOUR_PASSWORD";
 AsyncWebServer server(80);
 
-
 Adafruit_NeoPixel leds(NUM_LEDS, LED_PIN, NEO_WRGB + NEO_KHZ800);
 
 //LightCluster clusters[] = {};
-light lampsInCluster1[7] = {{0,0},{1,0},{2,0},{3,0},{4,0},{5,0},{6,0}};
+light lampsInCluster1[7] = {{0,0},{1,0},{3,0},{4,0},{5,0},{6,0},{7,0}};
 
 LightCluster myCluster(lampsInCluster1, 7, 0);
 
@@ -31,24 +33,24 @@ void connectWiFi() {
     Serial.println(WiFi.localIP());
 }
 
-void connectSDCard(){
+void connectSDCard() {
     if(!SD.begin()){
         Serial.println("Card Mount Failed");
         return;
     }
     uint8_t cardType = SD.cardType();
 
-    if(cardType == CARD_NONE){
+    if (cardType == CARD_NONE){
         Serial.println("No SD card attached");
         return;
     }
 
     Serial.print("SD Card Type: ");
-    if(cardType == CARD_MMC){
+    if (cardType == CARD_MMC){
         Serial.println("MMC");
-    } else if(cardType == CARD_SD){
+    } else if (cardType == CARD_SD){
         Serial.println("SDSC");
-    } else if(cardType == CARD_SDHC){
+    } else if (cardType == CARD_SDHC){
         Serial.println("SDHC");
     } else {
         Serial.println("UNKNOWN");
@@ -74,20 +76,36 @@ void setup() {
     Serial.begin(115000);
 
     connectSDCard();
+    Serial.println("\nSD card connected. Connecting WiFi\n");
+    delay(250);
+
     connectWiFi();
+    Serial.println("\nWifi connected. Setting up server\n");
+    delay(250);
+
     setupServer();
+    delay(250);
     server.begin();
+    Serial.println("\nServer started. Connecting to IR Receiver\n");
+    delay(250);
+
+    IrReceiver.begin(IR_RECEIVE_PIN, false);
+    Serial.println("\nIR Receiver connected. Starting LEDS\n");
+
 
     delay(1000);
     leds.begin();
     leds.clear();
 
-    Serial.println("Started");
+    Serial.println("Started LEDS");
 
     //int lampsInCluster1[] = {0,1,2,3,4,5,6,7,8,9};
-    //clusters[0] = LightCluster(lampsInCluster1, 0);
+    //LightCluster mycluserr(lampsInCluster1, 0, 0);
+    //clusters[0] = LightCluster(lampsInCluster1, 0, 0);
     Serial.println("Cluster made");
 
+    delay(250);
+    Serial.println("Setup done");
 }
 
 void loop() {
@@ -123,6 +141,15 @@ void loop() {
         leds.show();
         delay(1000);
     }*/
+    if (lastIrReceive < millis() - 500 && IrReceiver.decode()) {
+        lastIrReceive = millis();
+        IrReceiver.resume();
+        if (IrReceiver.decodedIRData.command == 0x10) {
+            // do something
+        } else if (IrReceiver.decodedIRData.command == 0x11) {
+            // do something else
+        }
+    }
     myCluster.runAnimation();
     leds.show();
     delay(1);
