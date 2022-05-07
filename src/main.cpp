@@ -30,7 +30,7 @@ LightCluster myCluster2(lampsInCluster2, 2, 0, &animation2);
 
 void connectWiFi() {
     WiFi.mode(WIFI_STA);
-    WiFi.begin(SSID, PASSWORD);
+    WiFi.begin(ssid, password);
     Serial.print("Connecting to WiFi ..");
     while (WiFi.status() != WL_CONNECTED) {
         Serial.print('.');
@@ -83,7 +83,7 @@ void setup() {
     clusters[0] = &myCluster;
     myCluster2.animationObject->delayTimeMS = 10;
     clusters[1] = &myCluster2;
-    /*connectSDCard();
+    connectSDCard();
     Serial.println("\nSD card connected. Connecting WiFi\n");
     delay(250);
 
@@ -97,7 +97,7 @@ void setup() {
     Serial.println("\nServer started. Connecting to IR Receiver\n");
     delay(250);
 
-    IrReceiver.begin(IR_RECEIVE_PIN, false);*/
+    IrReceiver.begin(IR_RECEIVE_PIN, false);
     Serial.println("\nIR Receiver connected. Starting LEDS\n");
 
     //LightCluster myCluster(lampsInCluster1, 7, 0, Animations(lampsInCluster1));
