@@ -22,6 +22,10 @@ light lampsInCluster1[7] = {{0,0},{1,0},{3,0},{4,0},{5,0},{6,0},{7,0}};
 Animations animation1(lampsInCluster1);
 LightCluster myCluster(lampsInCluster1, 7, 0, &animation1);
 
+light lampsInCluster2[2] = {{2,0},{8,0}};
+Animations animation2(lampsInCluster2);
+LightCluster myCluster2(lampsInCluster2, 2, 0, &animation2);
+
 
 //LightCluster myCluster(lampsInCluster1, 7, 0, Animations(lampsInCluster1));
 
@@ -78,6 +82,8 @@ void setup() {
     // write your initialization code here
     Serial.begin(115000);
     clusters[0] = &myCluster;
+    myCluster2.animationObject->delayTimeMS = 10;
+    clusters[1] = &myCluster2;
     /*connectSDCard();
     Serial.println("\nSD card connected. Connecting WiFi\n");
     delay(250);
@@ -156,15 +162,18 @@ void loop() {
         }
     }
     //myCluster.runAnimation();
-    clusters[0]->runAnimation();
-    Serial.println("Animation has done 1 loop step, showing leds");
-    delay(10);
-    for (int i = 0; i < NUM_LEDS; i++) {
+    bool hasRun = clusters[0]->runAnimation() || clusters[1]->runAnimation();
+    //clusters[1]->runAnimation();
+    //Serial.println("Animation has done 1 loop step, showing leds");
+    //delay(10);
+    /*for (int i = 0; i < NUM_LEDS; i++) {
         Serial.println(leds.getPixelColor(i));
         delay(10);
+    }*/
+    if (hasRun) {
+        leds.show();
     }
-    leds.show();
 
-    Serial.println("Leds showed");
-    delay(10);
+    //Serial.println("Leds showed");
+    delay(1);
 }

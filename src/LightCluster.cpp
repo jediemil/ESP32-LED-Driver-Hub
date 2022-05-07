@@ -5,35 +5,35 @@
 #include "LightCluster.h"
 #include "main.h"
 
-void LightCluster::runAnimation() {
+bool LightCluster::runAnimation() {
     if (shouldRun()) {
-        Serial.println("Animation begin");
-        delay(100);
+        //Serial.println("Animation begin");
+        //delay(100);
         animationObject->runAnimation(animationNumber);
         lastRun = millis();
 
-        Serial.println("Animation call success, setting colors");
-        Serial.println(animationObject->numLeds);
-        delay(100);
+        //Serial.println("Animation call success, setting colors");
+        //Serial.println(animationObject->numLeds);
+        //delay(100);
         for (int i = 0; i < animationObject->numLeds; i++) {
-            Serial.print("lights mapped = ");
+            /*Serial.print("lights mapped = ");
             Serial.println(animationObject->lights[i].mapped);
             Serial.print("color = ");
-            Serial.println(animationObject->lights[i].color, HEX);
+            Serial.println(animationObject->lights[i].color, HEX);*/
             leds.setPixelColor(animationObject->lights[i].mapped, animationObject->lights[i].color);
         }
-        Serial.println("Colors set");
-        delay(100);
+        //Serial.println("Colors set");
+        //delay(100);
         //Serial.println("Animation has run");
-        //return true;
+        return true;
     }
-    //return false;
+    return false;
 }
 
 void LightCluster::runSetup() {
-    Serial.println("Before setup");
+    //Serial.println("Before setup");
     animationObject->runSetup(animationNumber);
-    Serial.println("After setup");
+    //Serial.println("After setup");
 }
 
 void LightCluster::changeAnimation(int newAnimationNumber) {
@@ -49,19 +49,19 @@ LightCluster::LightCluster(struct light *incomingLights, int size, int animation
 //        data.mapped = lights[i];
 //        this->lights[i] = data;
 //    }
-    Serial.println("Inside light cluster constructor");
+    //Serial.println("Inside light cluster constructor");
     animationNumber = animation;
     numLights = size;
     animationObject->numLeds = size;
     lastRun = 0;
-    Serial.println("About to set up animation object");
+    //Serial.println("About to set up animation object");
     this->animationObject = animationObject;
-    Serial.println("Creating lookup");
+    //Serial.println("Creating lookup");
     //this->animationObject.createLookup();
-    Serial.println("Construct done, running setup and animation");
+    //Serial.println("Construct done, running setup and animation");
     runSetup();
-    Serial.println("Running animation");
-    delay(100);
+    //Serial.println("Running animation");
+    //delay(100);
     runAnimation();
 }
 

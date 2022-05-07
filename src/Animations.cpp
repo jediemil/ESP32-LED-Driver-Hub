@@ -5,11 +5,11 @@
 #include "Animations.h"
 
 Animations::Animations(struct light *lights) {
-    Serial.println("Inside animations constructor");
-    delay(100);
+    //Serial.println("Inside animations constructor");
+    //delay(100);
     this->lights = lights;
-    Serial.println("Animations constructed");
-    delay(100);
+    //Serial.println("Animations constructed");
+    //delay(100);
 }
 
 /*void Animations::createLookup() {
@@ -20,20 +20,20 @@ Animations::Animations(struct light *lights) {
 }*/
 
 void Animations::runAnimation(int animationID) {
-    /*Serial.println("Sketchy function call");
-    delay(100);
+    //Serial.println("Sketchy function call");
+    //delay(100);
     method_function func = animationPointer[animationID];
     (this->*func)();
-    Serial.println("Animation call success");
-    delay(100);*/
+    //Serial.println("Animation call success");
+    //delay(100);
 
-    if (animationID == 0) {
-        this->rainbow();
-    }
+    //if (animationID == 0) {
+    //    this->rainbow();
+    //}
 }
 
 void Animations::runSetup(int animationID) {
-    Serial.println("Inside setup");
+    //Serial.println("Inside setup");
     method_function func = setupPointer[animationID];
     (this->*func)();
     //if (animationID == 0) {
@@ -42,8 +42,8 @@ void Animations::runSetup(int animationID) {
 }
 
 void Animations::rainbow() {
-    Serial.println("Inside animation function");
-    delay(100);
+    //Serial.println("Inside animation function");
+    //delay(100);
     for (int light = 0; light < numLeds; light++) {
         lights[light].color = leds.ColorHSV(((light * animationSetting1 + animationI*65536/maxAnimationI) % 65536), 255, 255);
 //        Serial.print("Set ");

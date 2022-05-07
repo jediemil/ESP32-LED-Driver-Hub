@@ -20,7 +20,7 @@ public:
     int numLights;
     int animationNumber;
 
-    void runAnimation();
+    bool runAnimation();
     void changeAnimation(int newAnimationNumber);
 
     LightCluster(struct light *incomingLights, int size, int animation, Animations *animationObject);
