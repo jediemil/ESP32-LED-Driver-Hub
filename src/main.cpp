@@ -17,10 +17,13 @@ AsyncWebServer server(80);
 
 Adafruit_NeoPixel leds(NUM_LEDS, LED_PIN, NEO_WRGB + NEO_KHZ800);
 
-//LightCluster clusters[] = {};
+LightCluster *clusters[10];
 light lampsInCluster1[7] = {{0,0},{1,0},{3,0},{4,0},{5,0},{6,0},{7,0}};
+Animations animation1(lampsInCluster1);
+LightCluster myCluster(lampsInCluster1, 7, 0, &animation1);
 
-LightCluster myCluster(lampsInCluster1, 7, 0, Animations(lampsInCluster1));
+
+//LightCluster myCluster(lampsInCluster1, 7, 0, Animations(lampsInCluster1));
 
 void connectWiFi() {
     WiFi.mode(WIFI_STA);
@@ -74,7 +77,7 @@ void setupServer() {
 void setup() {
     // write your initialization code here
     Serial.begin(115000);
-
+    clusters[0] = &myCluster;
     /*connectSDCard();
     Serial.println("\nSD card connected. Connecting WiFi\n");
     delay(250);
@@ -103,6 +106,7 @@ void setup() {
     //int lampsInCluster1[] = {0,1,2,3,4,5,6,7,8,9};
     //LightCluster mycluserr(lampsInCluster1, 0, 0);
     //clusters[0] = LightCluster(lampsInCluster1, 0, 0);
+
     Serial.println("Cluster made");
 
     delay(250);
@@ -151,7 +155,16 @@ void loop() {
             // do something else
         }
     }
-    myCluster.runAnimation();
+    //myCluster.runAnimation();
+    clusters[0]->runAnimation();
+    Serial.println("Animation has done 1 loop step, showing leds");
+    delay(10);
+    for (int i = 0; i < NUM_LEDS; i++) {
+        Serial.println(leds.getPixelColor(i));
+        delay(10);
+    }
     leds.show();
-    delay(1);
+
+    Serial.println("Leds showed");
+    delay(10);
 }

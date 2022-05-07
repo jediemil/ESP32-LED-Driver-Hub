@@ -20,12 +20,16 @@ Animations::Animations(struct light *lights) {
 }*/
 
 void Animations::runAnimation(int animationID) {
+    /*Serial.println("Sketchy function call");
+    delay(100);
     method_function func = animationPointer[animationID];
     (this->*func)();
+    Serial.println("Animation call success");
+    delay(100);*/
 
-    //if (animationID == 0) {
-    //    rainbow();
-    //}
+    if (animationID == 0) {
+        this->rainbow();
+    }
 }
 
 void Animations::runSetup(int animationID) {
@@ -38,6 +42,8 @@ void Animations::runSetup(int animationID) {
 }
 
 void Animations::rainbow() {
+    Serial.println("Inside animation function");
+    delay(100);
     for (int light = 0; light < numLeds; light++) {
         lights[light].color = leds.ColorHSV(((light * animationSetting1 + animationI*65536/maxAnimationI) % 65536), 255, 255);
 //        Serial.print("Set ");
