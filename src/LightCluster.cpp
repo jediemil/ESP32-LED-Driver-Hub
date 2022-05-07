@@ -5,23 +5,10 @@
 #include "LightCluster.h"
 #include "main.h"
 
-int animationI;
-int maxAnimationI;
-int delayTimeMS;
-int animationSetting1;
-int animationSetting2;
-int numLeds;
-
-extern void rainbow(light lights[]);
-
-extern void setupRainbow();
-void (*animationTable[])(light lights[]) = {rainbow};
-void (*setup_table[])() = {setupRainbow};
-
 void LightCluster::runAnimation() {
     if (shouldRun()) {
         //Serial.println("Animation begin");
-        animationTable[animationNumber](lights);
+        animationObject.runAnimation(animationNumber);
         lastRun = millis();
 
         for (int i = 0; i < numLights; i++) {
@@ -29,7 +16,7 @@ void LightCluster::runAnimation() {
 //            Serial.println(lights[i].mapped);
 //            Serial.print("color = ");
 //            Serial.println(lights[i].color, HEX);
-            leds.setPixelColor(lights[i].mapped, lights[i].color);
+            leds.setPixelColor(animationObject.lights[i].mapped, animationObject.lights[i].color);
         }
         //Serial.println("Animation has run");
         //return true;
@@ -38,7 +25,9 @@ void LightCluster::runAnimation() {
 }
 
 void LightCluster::runSetup() {
-    setup_table[animationNumber]();
+    Serial.println("Before setup");
+    animationObject.runSetup(animationNumber);
+    Serial.println("After setup");
 }
 
 void LightCluster::changeAnimation(int newAnimationNumber) {
@@ -47,51 +36,32 @@ void LightCluster::changeAnimation(int newAnimationNumber) {
     runAnimation();
 }
 
-LightCluster::LightCluster(struct light *incomingLights, int size, int animation) {
+LightCluster::LightCluster(struct light *incomingLights, int size, int animation, Animations animationObject)
+        : animationObject(animationObject) {
 //    for (int i = 0; i < sizeof(lights); i++) {
 //        light data;
 //        data.mapped = lights[i];
 //        this->lights[i] = data;
 //    }
+    Serial.println("Inside light cluster constructor");
     animationNumber = animation;
     numLights = size;
-    numLeds = size;
-    lights = incomingLights;
     lastRun = 0;
-
+    Serial.println("About to set up animation object");
+    this->animationObject = animationObject;
+    Serial.println("Creating lookup");
+    //this->animationObject.createLookup();
+    Serial.println("Construct done, running setup and animation");
     runSetup();
     runAnimation();
 }
 
 bool LightCluster::shouldRun() {
     //Serial.println("ShouldRun started");
-    if (millis() - lastRun >= delayTimeMS) {
+    if (millis() - lastRun >= animationObject.delayTimeMS) {
         //Serial.println("ShouldRun true");
         return true;
     }
     //Serial.println("ShouldRun false");
     return false;
-}
-
-void rainbow(light lights[]) {
-    for (int light = 0; light < numLeds; light++) {
-        lights[light].color = leds.ColorHSV(((light * animationSetting1 + animationI*65536/maxAnimationI) % 65536), 255, 255);
-//        Serial.print("Set ");
-//        Serial.print(light);
-//        Serial.print(" to ");
-//        Serial.println(leds.ColorHSV(((light * animationSetting1 + animationI) * 360), 255, 255));
-//        Serial.println(light * animationSetting1);
-//        Serial.println((light * animationSetting1 + animationI) * 360);
-    }
-    //Serial.print("AnimationI = ");
-    //Serial.println(animationI);
-    animationI += 1;
-    animationI %= maxAnimationI; //Don't go all way to 255 because 0*65536/256 = 0 and 256*65536/256 = 65536. It will result in the same color for 2 cycles.
-}
-
-void setupRainbow() {
-    animationI = 0;
-    delayTimeMS = 100;
-    maxAnimationI = 256;
-    animationSetting1 = 65536/(numLeds+1);
 }

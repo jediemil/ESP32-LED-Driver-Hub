@@ -20,7 +20,7 @@ Adafruit_NeoPixel leds(NUM_LEDS, LED_PIN, NEO_WRGB + NEO_KHZ800);
 //LightCluster clusters[] = {};
 light lampsInCluster1[7] = {{0,0},{1,0},{3,0},{4,0},{5,0},{6,0},{7,0}};
 
-LightCluster myCluster(lampsInCluster1, 7, 0);
+LightCluster myCluster(lampsInCluster1, 7, 0, Animations(lampsInCluster1));
 
 void connectWiFi() {
     WiFi.mode(WIFI_STA);
@@ -75,7 +75,7 @@ void setup() {
     // write your initialization code here
     Serial.begin(115000);
 
-    connectSDCard();
+    /*connectSDCard();
     Serial.println("\nSD card connected. Connecting WiFi\n");
     delay(250);
 
@@ -89,9 +89,10 @@ void setup() {
     Serial.println("\nServer started. Connecting to IR Receiver\n");
     delay(250);
 
-    IrReceiver.begin(IR_RECEIVE_PIN, false);
+    IrReceiver.begin(IR_RECEIVE_PIN, false);*/
     Serial.println("\nIR Receiver connected. Starting LEDS\n");
 
+    //LightCluster myCluster(lampsInCluster1, 7, 0, Animations(lampsInCluster1));
 
     delay(1000);
     leds.begin();
