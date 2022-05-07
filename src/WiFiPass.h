@@ -1,0 +1,11 @@
+//
+// Created by emilr on 2022-05-08.
+//
+
+#ifndef UNTITLED_WIFIPASS_H
+#define UNTITLED_WIFIPASS_H
+
+#define SSID "INTERNET_SSID_HERE"
+#define PASSWORD "INTERNET_PASSWORD_HERE"
+
+#endif //UNTITLED_WIFIPASS_H

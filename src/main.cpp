@@ -1,5 +1,6 @@
 #include "main.h"
 #include "LightCluster.h"
+#include "WiFiPass.h"
 
 #include <WiFi.h>
 #include <../.pio/libdeps/esp32doit-devkit-v1/AsyncTCP/src/AsyncTCP.h>
@@ -11,8 +12,6 @@
 
 uint32_t lastIrReceive = 0;
 
-const char* ssid = "REPLACE_WITH_YOUR_SSID";
-const char* password = "REPLACE_WITH_YOUR_PASSWORD";
 AsyncWebServer server(80);
 
 Adafruit_NeoPixel leds(NUM_LEDS, LED_PIN, NEO_WRGB + NEO_KHZ800);
@@ -31,7 +30,7 @@ LightCluster myCluster2(lampsInCluster2, 2, 0, &animation2);
 
 void connectWiFi() {
     WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, password);
+    WiFi.begin(SSID, PASSWORD);
     Serial.print("Connecting to WiFi ..");
     while (WiFi.status() != WL_CONNECTED) {
         Serial.print('.');
