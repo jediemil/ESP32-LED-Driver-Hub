@@ -5,7 +5,8 @@
 #include <WiFi.h>
 #include <../.pio/libdeps/esp32doit-devkit-v1/AsyncTCP/src/AsyncTCP.h>
 #include "../.pio/libdeps/esp32doit-devkit-v1/ESP Async WebServer/src/ESPAsyncWebServer.h"
-#include "SD.h"
+#include <SPI.h>
+#include <SD.h>
 #include <../.pio/libdeps/esp32doit-devkit-v1/IRremote/src/IRremote.hpp>
 
 #define IR_RECEIVE_PIN 15
@@ -72,8 +73,12 @@ void setupServer() {
 
     server.serveStatic("/", SD, "/");
 
-    server.on("/api/create_cluster", HTTP_POST, [](AsyncWebServerRequest *request) {
+    server.on("/api/set_config", HTTP_POST, [](AsyncWebServerRequest *request) {
         String lightString = request->getHeader("lights")->toString();
+    });
+
+    server.on("/api/get_config", HTTP_GET, [](AsyncWebServerRequest *request) {
+        //request->send();
     });
 }
 
@@ -83,6 +88,9 @@ void setup() {
     clusters[0] = &myCluster;
     myCluster2.animationObject->delayTimeMS = 10;
     clusters[1] = &myCluster2;
+
+    Serial.println("\nBooted. Connecting SD card\n");
+
     connectSDCard();
     Serial.println("\nSD card connected. Connecting WiFi\n");
     delay(250);
@@ -154,11 +162,14 @@ void loop() {
     if (lastIrReceive < millis() - 500 && IrReceiver.decode()) {
         lastIrReceive = millis();
         IrReceiver.resume();
+        Serial.print("Got ir command ");
+        Serial.println(IrReceiver.decodedIRData.command);
         if (IrReceiver.decodedIRData.command == 0x10) {
             // do something
         } else if (IrReceiver.decodedIRData.command == 0x11) {
             // do something else
         }
+        while (IrReceiver.decode()) {}
     }
     //myCluster.runAnimation();
     bool hasRun = clusters[0]->runAnimation() || clusters[1]->runAnimation();
