@@ -5,9 +5,12 @@
 #include <WiFi.h>
 #include <../.pio/libdeps/esp32doit-devkit-v1/AsyncTCP/src/AsyncTCP.h>
 #include "../.pio/libdeps/esp32doit-devkit-v1/ESP Async WebServer/src/ESPAsyncWebServer.h"
+#include "../.pio/libdeps/esp32doit-devkit-v1/ESP Async WebServer/src/AsyncJson.h"
 #include <SPI.h>
 #include <SD.h>
 #include <../.pio/libdeps/esp32doit-devkit-v1/IRremote/src/IRremote.hpp>
+#include <../.pio/libdeps/esp32doit-devkit-v1/ArduinoJson/src/ArduinoJson.h>
+
 
 #define IR_RECEIVE_PIN 15
 
@@ -18,6 +21,7 @@ AsyncWebServer server(80);
 Adafruit_NeoPixel leds(NUM_LEDS, LED_PIN, NEO_WRGB + NEO_KHZ800);
 
 LightCluster *clusters[10];
+int numClusters = 2;
 light lampsInCluster1[7] = {{0,0},{1,0},{3,0},{4,0},{5,0},{6,0},{7,0}};
 Animations animation1(lampsInCluster1);
 LightCluster myCluster(lampsInCluster1, 7, 0, &animation1);
@@ -74,17 +78,64 @@ void setupServer() {
     server.serveStatic("/", SD, "/");
 
     server.on("/api/set_config", HTTP_POST, [](AsyncWebServerRequest *request) {
-        String lightString = request->getHeader("lights")->toString();
+        StaticJsonDocument<200> doc;
+        DeserializationError error = deserializeJson(doc, request->header("data"));
+        Serial.print(request->header("data"));
+        if (error) {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.f_str());
+            return;
+        }
+
+        for (int i = 0; i < numClusters; i++) {
+            delete[]clusters[i]->animationObject;
+            delete[]clusters[i];
+        }
+
+        int numNewClusters = doc["numClusters"];
+        for (int i = 0; i < numNewClusters; i++) {
+            int newNumLights = doc["clusters"][i]["numLights"];
+            light newLights[newNumLights];
+            //memset(newLights, 0, newNumLights*sizeof(light));
+
+            for (int lamp = 0; lamp < newNumLights; lamp++) {
+                newLights[lamp] = {doc["clusters"][i]["lights"]["lamp"], 0};
+            }
+
+            static auto newAnimationObject = new Animations(newLights);
+            static auto newLightCluster = new LightCluster(newLights, newNumLights, doc["clusters"][i]["animation"], newAnimationObject);
+            clusters[i] = newLightCluster;
+
+            request->send(200, "application/json", "{}");
+        }
     });
 
     server.on("/api/get_config", HTTP_GET, [](AsyncWebServerRequest *request) {
         //request->send();
     });
+
+    server.on("/api/change_setting", HTTP_POST, [](AsyncWebServerRequest *request) {
+        StaticJsonDocument<200> doc;
+        DeserializationError error = deserializeJson(doc, request->getHeader("data")->value().c_str());
+        Serial.println(request->getHeader("data")->value().c_str());
+        if (error) {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.f_str());
+            return;
+        }
+
+        int cluster = doc["targetCluster"];
+        int value = doc["newValue"];
+        if (doc["setting"] == "delayTime") {
+            clusters[cluster]->animationObject->delayTimeMS = value;
+        }
+        request->send(200, "application/json", "{}");
+    });
 }
 
 void setup() {
     // write your initialization code here
-    Serial.begin(115000);
+    Serial.begin(115200);
     clusters[0] = &myCluster;
     myCluster2.animationObject->delayTimeMS = 10;
     clusters[1] = &myCluster2;
@@ -159,6 +210,7 @@ void loop() {
         leds.show();
         delay(1000);
     }*/
+
     if (lastIrReceive < millis() - 500 && IrReceiver.decode()) {
         lastIrReceive = millis();
         IrReceiver.resume();
@@ -169,21 +221,11 @@ void loop() {
         } else if (IrReceiver.decodedIRData.command == 0x11) {
             // do something else
         }
-        while (IrReceiver.decode()) {}
     }
-    //myCluster.runAnimation();
+
     bool hasRun = clusters[0]->runAnimation() || clusters[1]->runAnimation();
-    //clusters[1]->runAnimation();
-    //Serial.println("Animation has done 1 loop step, showing leds");
-    //delay(10);
-    /*for (int i = 0; i < NUM_LEDS; i++) {
-        Serial.println(leds.getPixelColor(i));
-        delay(10);
-    }*/
     if (hasRun) {
         leds.show();
     }
-
-    //Serial.println("Leds showed");
     delay(1);
 }
