@@ -38,6 +38,7 @@ void LightCluster::runSetup() {
 
 void LightCluster::changeAnimation(int newAnimationNumber) {
     animationNumber = newAnimationNumber;
+    lastRun = 0;
     runSetup();
     runAnimation();
 }

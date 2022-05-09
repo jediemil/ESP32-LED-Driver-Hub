@@ -78,7 +78,7 @@ void setupServer() {
     server.serveStatic("/", SD, "/");
 
     server.on("/api/set_config", HTTP_POST, [](AsyncWebServerRequest *request) {
-        StaticJsonDocument<200> doc;
+        StaticJsonDocument<400> doc;
         DeserializationError error = deserializeJson(doc, request->header("data"));
         Serial.print(request->header("data"));
         if (error) {
@@ -125,10 +125,30 @@ void setupServer() {
         }
 
         int cluster = doc["targetCluster"];
-        int value = doc["newValue"];
+        long value = doc["newValue"];
         if (doc["setting"] == "delayTime") {
             clusters[cluster]->animationObject->delayTimeMS = value;
+        } else if (doc["setting"] == "animationSetting1") {
+            clusters[cluster]->animationObject->animationSetting1 = value;
+        } else if (doc["setting"] == "animationSetting2") {
+            clusters[cluster]->animationObject->animationSetting2 = value;
         }
+        request->send(200, "application/json", "{}");
+    });
+
+    server.on("/api/change_animation", HTTP_POST, [](AsyncWebServerRequest *request) {
+        StaticJsonDocument<200> doc;
+        DeserializationError error = deserializeJson(doc, request->getHeader("data")->value().c_str());
+        Serial.println(request->getHeader("data")->value().c_str());
+        if (error) {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.f_str());
+            return;
+        }
+
+        int cluster = doc["targetCluster"];
+        int value = doc["animation"];
+        clusters[cluster]->changeAnimation(value);
         request->send(200, "application/json", "{}");
     });
 }

@@ -12,8 +12,8 @@ public:
     int animationI;
     int maxAnimationI;
     int delayTimeMS;
-    int animationSetting1;
-    int animationSetting2;
+    long animationSetting1;
+    long animationSetting2;
     int numLeds;
 
     explicit Animations(struct light *lights);
@@ -23,15 +23,21 @@ public:
     //void createLookup();
 
     typedef void (Animations::*method_function)();
-    method_function animationPointer[1] = {&Animations::rainbow};
-    method_function setupPointer[1] = {&Animations::setupRainbow};
+    method_function animationPointer[3] = {&Animations::off, &Animations::rainbow, &Animations::randomColors};
+    method_function setupPointer[3] = {&Animations::setup_off, &Animations::setup_rainbow, &Animations::setup_randomColors};
 
     struct light *lights;
 
 
 private:
     void rainbow();
-    void setupRainbow();
+    void setup_rainbow();
+
+    void off();
+    void setup_off();
+
+    void randomColors();
+    void setup_randomColors();
 };
 
 
