@@ -12,8 +12,10 @@ public:
     int animationI;
     int maxAnimationI;
     int delayTimeMS;
-    long animationSetting1;
-    long animationSetting2;
+    long long animationSetting1;
+    long long animationSetting2;
+    long animationSetting3;
+    long animationSetting4;
     int numLeds;
 
     explicit Animations(struct light *lights);

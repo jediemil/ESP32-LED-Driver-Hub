@@ -55,6 +55,7 @@ LightCluster::LightCluster(struct light *incomingLights, int size, int animation
     numLights = size;
     animationObject->numLeds = size;
     lastRun = 0;
+    lights = incomingLights;
     //Serial.println("About to set up animation object");
     this->animationObject = animationObject;
     //Serial.println("Creating lookup");
@@ -64,6 +65,12 @@ LightCluster::LightCluster(struct light *incomingLights, int size, int animation
     //Serial.println("Running animation");
     //delay(100);
     runAnimation();
+}
+
+LightCluster::~LightCluster() {
+    delete[] animationObject->lights;
+    delete[] lights;
+    delete[] animationObject;
 }
 
 bool LightCluster::shouldRun() {

@@ -24,7 +24,9 @@ public:
     void changeAnimation(int newAnimationNumber);
 
     LightCluster(struct light *incomingLights, int size, int animation, Animations *animationObject);
+    ~LightCluster();
 
+    light *lights;
     Animations *animationObject;
 };
 

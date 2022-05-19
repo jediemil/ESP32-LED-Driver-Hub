@@ -21,17 +21,27 @@ AsyncWebServer server(80);
 Adafruit_NeoPixel leds(NUM_LEDS, LED_PIN, NEO_WRGB + NEO_KHZ800);
 
 LightCluster *clusters[10];
-int numClusters = 2;
-light lampsInCluster1[7] = {{0,0},{1,0},{3,0},{4,0},{5,0},{6,0},{7,0}};
-Animations animation1(lampsInCluster1);
-LightCluster myCluster(lampsInCluster1, 7, 0, &animation1);
+int numClusters = 0;
 
-light lampsInCluster2[2] = {{2,0},{8,0}};
-Animations animation2(lampsInCluster2);
-LightCluster myCluster2(lampsInCluster2, 2, 0, &animation2);
-
+int occupiedLamps[NUM_LEDS];
+int numOccupiedLamps = 0;
 
 //LightCluster myCluster(lampsInCluster1, 7, 0, Animations(lampsInCluster1));
+
+void updateOccupiedLamps() {
+    for (int & occupiedLamp : occupiedLamps) {
+        occupiedLamp = -1;
+    }
+
+    int numFoundLamps = 0;
+    for (int i = 0; i < numClusters; i++) {
+        for (int lamp = 0; lamp < clusters[i]->numLights; lamp++) {
+            numFoundLamps++;
+            occupiedLamps[clusters[i]->animationObject->lights[lamp].mapped] = i;
+        }
+    }
+    numOccupiedLamps = numFoundLamps;
+}
 
 void connectWiFi() {
     WiFi.mode(WIFI_STA);
@@ -70,12 +80,38 @@ void connectSDCard() {
     Serial.printf("SD Card Size: %lluMB\n", cardSize);
 }
 
+
 void setupServer() {
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(SD, "/index.html", "text/html");
     });
 
     server.serveStatic("/", SD, "/");
+
+    server.on("/api/get_config", HTTP_GET, [](AsyncWebServerRequest *request) {
+        AsyncResponseStream *response = request->beginResponseStream("application/json");
+        DynamicJsonDocument json(1024);
+        json["numClusters"] = numClusters;
+        json["clusters"] = DynamicJsonDocument(1024);
+
+        for (int cluster = 0; cluster < numClusters; cluster++) { //    TODO: Send settings too
+            json["clusters"]["numLights"] = clusters[cluster]->numLights;
+            json["clusters"]["animation"] = clusters[cluster]->animationNumber;
+            json["clusters"]["lights"] = DynamicJsonDocument(1024);
+            for (int lamp = 0; lamp < clusters[cluster]->numLights; lamp++) {
+                json["clusters"]["lights"][lamp] = clusters[cluster]->lights[lamp].mapped;
+            }
+        }
+        serializeJson(json, *response);
+        response->addHeader("Access-Control-Allow-Origin","*");
+        response->addHeader("Access-Control-Allow-Headers", "Content-Type, data");
+        response->addHeader("Access-Control-Allow-Methods", "POST, GET");
+        /*response->addHeader("access-control-allow-credentials", "true");
+        response->addHeader("access-control-allow-origin", "*");
+        response->addHeader("access-control-expose-headers", "");*/
+        request->send(response);
+    });
+
 
     server.on("/api/set_config", HTTP_POST, [](AsyncWebServerRequest *request) {
         StaticJsonDocument<400> doc;
@@ -88,30 +124,28 @@ void setupServer() {
         }
 
         for (int i = 0; i < numClusters; i++) {
-            delete[]clusters[i]->animationObject;
             delete[]clusters[i];
         }
 
         int numNewClusters = doc["numClusters"];
         for (int i = 0; i < numNewClusters; i++) {
             int newNumLights = doc["clusters"][i]["numLights"];
-            light newLights[newNumLights];
-            //memset(newLights, 0, newNumLights*sizeof(light));
+            static light *newLights;
+            newLights = (light*) malloc(newNumLights * sizeof(light));
 
             for (int lamp = 0; lamp < newNumLights; lamp++) {
-                newLights[lamp] = {doc["clusters"][i]["lights"]["lamp"], 0};
+                newLights[lamp] = {doc["clusters"][i]["lights"][lamp], 0};
             }
 
             static auto newAnimationObject = new Animations(newLights);
             static auto newLightCluster = new LightCluster(newLights, newNumLights, doc["clusters"][i]["animation"], newAnimationObject);
             clusters[i] = newLightCluster;
+            numClusters = numNewClusters;
+
+            updateOccupiedLamps();
 
             request->send(200, "application/json", "{}");
         }
-    });
-
-    server.on("/api/get_config", HTTP_GET, [](AsyncWebServerRequest *request) {
-        //request->send();
     });
 
     server.on("/api/change_setting", HTTP_POST, [](AsyncWebServerRequest *request) {
@@ -125,13 +159,19 @@ void setupServer() {
         }
 
         int cluster = doc["targetCluster"];
-        long value = doc["newValue"];
+        long long value = doc["newValue"];
         if (doc["setting"] == "delayTime") {
             clusters[cluster]->animationObject->delayTimeMS = value;
         } else if (doc["setting"] == "animationSetting1") {
             clusters[cluster]->animationObject->animationSetting1 = value;
         } else if (doc["setting"] == "animationSetting2") {
             clusters[cluster]->animationObject->animationSetting2 = value;
+        } else if (doc["setting"] == "animationSetting3") {
+            clusters[cluster]->animationObject->animationSetting3 = value;
+        } else if (doc["setting"] == "animationSetting4") {
+            clusters[cluster]->animationObject->animationSetting4 = value;
+        } else if (doc["setting"] == "maxAnimationI") {
+            clusters[cluster]->animationObject->maxAnimationI = value;
         }
         request->send(200, "application/json", "{}");
     });
@@ -151,14 +191,97 @@ void setupServer() {
         clusters[cluster]->changeAnimation(value);
         request->send(200, "application/json", "{}");
     });
+
+    server.on("/api/create_cluster", HTTP_POST, [](AsyncWebServerRequest *request) {
+        StaticJsonDocument<200> doc;
+        DeserializationError error = deserializeJson(doc, request->getHeader("data")->value().c_str());
+        Serial.println(request->getHeader("data")->value().c_str());
+        if (error) {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.f_str());
+            return;
+        }
+
+        int numLights = doc["numLights"];
+        static light *newLights;
+        newLights = (light*) malloc(numLights * sizeof(light));
+
+        for (int i = 0; i < numLights; i++) {
+            int mappedLight = doc["lights"][i];
+            if (occupiedLamps[mappedLight] < 0) {
+                newLights[i] = {mappedLight, 0};
+            }
+        }
+
+        static auto newAnimationObject = new Animations(newLights);
+        static auto newLightCluster = new LightCluster(newLights, numLights, 0, newAnimationObject);
+        clusters[numClusters] = newLightCluster;
+        numClusters++;
+
+        updateOccupiedLamps();
+
+        request->send(200, "application/json", "{}");
+    });
+
+    server.on("/api/delete_cluster", HTTP_POST, [](AsyncWebServerRequest *request) {
+        StaticJsonDocument<200> doc;
+        DeserializationError error = deserializeJson(doc, request->getHeader("data")->value().c_str());
+        Serial.println(request->getHeader("data")->value().c_str());
+        if (error) {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.f_str());
+            return;
+        }
+
+        int targetCluster = doc["cluster"];
+
+        for (int i = 0; i < numClusters; i++) {
+            if (i == targetCluster) {
+                delete[]clusters[i];
+            }
+            if (i > targetCluster) {
+                clusters[i-1] = clusters[i];
+            }
+        }
+        numClusters--;
+
+        updateOccupiedLamps();
+
+        request->send(200, "application/json", "{}");
+    });
+
+    server.on("/api/sync", HTTP_POST, [](AsyncWebServerRequest *request) {
+        StaticJsonDocument<200> doc;
+        DeserializationError error = deserializeJson(doc, request->getHeader("data")->value().c_str());
+        Serial.println(request->getHeader("data")->value().c_str());
+        if (error) {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.f_str());
+            return;
+        }
+
+        for (int i = 0; i < numClusters; i++) {
+            clusters[i]->animationObject->animationI = 0;
+        }
+        request->send(200, "application/json", "{}");
+    });
 }
 
 void setup() {
     // write your initialization code here
     Serial.begin(115200);
-    clusters[0] = &myCluster;
-    myCluster2.animationObject->delayTimeMS = 10;
-    clusters[1] = &myCluster2;
+
+    static light allLights[NUM_LEDS];
+    for (int i = 0; i < NUM_LEDS; i++) {
+        allLights[i] = {i, 0};
+    }
+
+    static auto startAnimationObject = new Animations(allLights);
+    static auto startCluster = new LightCluster(allLights, NUM_LEDS, 0, startAnimationObject);
+
+    clusters[0] = startCluster;
+    numClusters = 1;
+    updateOccupiedLamps();
 
     Serial.println("\nBooted. Connecting SD card\n");
 
@@ -243,7 +366,10 @@ void loop() {
         }
     }
 
-    bool hasRun = clusters[0]->runAnimation() || clusters[1]->runAnimation();
+    bool hasRun = false;
+    for (int i = 0; i < numClusters; i++) {
+        hasRun = hasRun || clusters[i]->runAnimation();
+    }
     if (hasRun) {
         leds.show();
     }

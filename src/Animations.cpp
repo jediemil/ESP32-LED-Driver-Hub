@@ -123,7 +123,7 @@ void Animations::randomColors() {
             lamp->targetW = random(minW, maxW);
 
             lamp->animI = 0;
-            lamp->endTick = random(30, 300); //Between 3 and 30 seconds. TODO add animationSetting3 and 4 fpr this.
+            lamp->endTick = random(animationSetting3, animationSetting4);
 
             lamp->startR = r;
             lamp->startG = g;
@@ -137,6 +137,8 @@ void Animations::setup_randomColors() {
     delayTimeMS = 100;
     animationSetting1 = 0x00000000;
     animationSetting2 = 0xFFFFFFFF;
+    animationSetting3 = 30;
+    animationSetting4 = 300;
     for (int i = 0; i < numLeds; i++) {
         //Serial.println("In loop");
         light *lamp = &lights[i];
@@ -157,7 +159,7 @@ void Animations::setup_randomColors() {
         lamp->targetW = random(minW, maxW);
 
         lamp->animI = 0;
-        lamp->endTick = random(30, 300); //Between 3 and 30 seconds. TODO add animationSetting3 and 4 for this.
+        lamp->endTick = random(animationSetting3, animationSetting4); //Between 3 and 30 seconds. TODO add animationSetting3 and 4 for this.
         //Serial.print("EndTick = ");
         //Serial.println(lamp->endTick);
 

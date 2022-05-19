@@ -1,4 +1,5 @@
 .pio
 CMakeListsPrivate.txt
 cmake-build-*/
-src/WiFiPass.h
+./src/WiFiPass.h
+WiFiPass.h

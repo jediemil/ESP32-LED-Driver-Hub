@@ -5,7 +5,7 @@
 #ifndef UNTITLED_WIFIPASS_H
 #define UNTITLED_WIFIPASS_H
 
-const char* ssid = "Tallium 2.4";
-const char* password = "vgjsdsmhds";
+const char* ssid = "SSID HERE";
+const char* password = "PASSWORD HERE";
 
 #endif //UNTITLED_WIFIPASS_H
