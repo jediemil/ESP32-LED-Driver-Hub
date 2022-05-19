@@ -95,11 +95,11 @@ void setupServer() {
         json["clusters"] = DynamicJsonDocument(1024);
 
         for (int cluster = 0; cluster < numClusters; cluster++) { //    TODO: Send settings too
-            json["clusters"]["numLights"] = clusters[cluster]->numLights;
-            json["clusters"]["animation"] = clusters[cluster]->animationNumber;
-            json["clusters"]["lights"] = DynamicJsonDocument(1024);
+            json["clusters"][cluster]["numLights"] = clusters[cluster]->numLights;
+            json["clusters"][cluster]["animation"] = clusters[cluster]->animationNumber;
+            json["clusters"][cluster]["lights"] = DynamicJsonDocument(1024);
             for (int lamp = 0; lamp < clusters[cluster]->numLights; lamp++) {
-                json["clusters"]["lights"][lamp] = clusters[cluster]->lights[lamp].mapped;
+                json["clusters"][cluster]["lights"][lamp] = clusters[cluster]->lights[lamp].mapped;
             }
         }
         serializeJson(json, *response);
