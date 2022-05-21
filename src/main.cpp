@@ -225,7 +225,15 @@ void setupServer() {
         bool containsOccupiedLamp = false;
         for (int i = 0; i < numLights; i++) {
             int mappedLight = doc["lights"][i];
-            containsOccupiedLamp = containsOccupiedLamp || occupiedLamps[i] < 0;
+            containsOccupiedLamp = containsOccupiedLamp || occupiedLamps[mappedLight] >= 0;
+        }
+
+        Serial.println(containsOccupiedLamp);
+        for (int i = 0; i < NUM_LEDS; i++) {
+            Serial.print("Lamp ");
+            Serial.print(i);
+            Serial.print(" -> ");
+            Serial.println(occupiedLamps[i]);
         }
 
         if (!containsOccupiedLamp) {
@@ -421,13 +429,22 @@ void loop() {
         leds.show();
     }
 
+    Serial.print("Num clusters: ");
+    Serial.println(numClusters);
+
+    Serial.print("Num occupied lamps: ");
+    Serial.println(numOccupiedLamps);
+
+
     if (numClusters > 0) {
         Serial.println("");
-        for (int i = 0; i < clusters[0]->numLights; i++) {
-            Serial.print("Mapped light: ");
-            Serial.println(clusters[0]->lights[i].mapped);
+        for (int c = 0; c < numClusters; c++) {
+            for (int i = 0; i < clusters[c]->numLights; i++) {
+                Serial.print("Mapped light: ");
+                Serial.println(clusters[c]->lights[i].mapped);
+            }
+            delay(1000);
         }
-        delay(1000);
     }
     delay(1);
 }
