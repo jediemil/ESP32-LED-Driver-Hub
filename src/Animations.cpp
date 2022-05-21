@@ -42,14 +42,18 @@ void Animations::runSetup(int animationID) {
 }
 
 
-void Animations::off() {
+void Animations::static_color() {
     for (int light = 0; light < numLeds; light++) {
-        lights[light].color = 0;
+        lights[light].color = animationSetting1;
     }
 }
 
-void Animations::setup_off() {
+void Animations::setup_static_color() {
     delayTimeMS = 10000;
+    animationSetting1 = 0;
+    for (int light = 0; light < numLeds; light++) {
+        lights[light].color = animationSetting1;
+    }
 }
 
 
@@ -83,20 +87,18 @@ void Animations::setup_rainbow() {
 
 void Animations::randomColors() {
     for (int i = 0; i < numLeds; i++) {
-        light lamp = lights[i];
-
-        lamp.animI++;
+        lights[i].animI++;
         /*Serial.println("Inside animation, doing main calc");
         Serial.print("endTick = ");
         Serial.println(lamp->endTick);
         delay(100);*/
-        uint32_t r = (lamp.targetR - lamp.startR) * lamp.animI / lamp.endTick + lamp.startR;
-        uint32_t g = (lamp.targetG - lamp.startG) * lamp.animI / lamp.endTick + lamp.startG;
-        uint32_t b = (lamp.targetB - lamp.startB) * lamp.animI / lamp.endTick + lamp.startB;
-        uint32_t w = (lamp.targetW - lamp.startW) * lamp.animI / lamp.endTick + lamp.startW;
+        uint32_t r = (lights[i].targetR - lights[i].startR) * lights[i].animI / lights[i].endTick + lights[i].startR;
+        uint32_t g = (lights[i].targetG - lights[i].startG) * lights[i].animI / lights[i].endTick + lights[i].startG;
+        uint32_t b = (lights[i].targetB - lights[i].startB) * lights[i].animI / lights[i].endTick + lights[i].startB;
+        uint32_t w = (lights[i].targetW - lights[i].startW) * lights[i].animI / lights[i].endTick + lights[i].startW;
         //Serial.println("After main calc");
 
-        lamp.color = w << 24 | r << 16 | g << 8 | b;
+        lights[i].color = w << 24 | r << 16 | g << 8 | b;
         /*Serial.print("R = ");
         Serial.print(r);
         Serial.print(", G = ");
@@ -108,7 +110,7 @@ void Animations::randomColors() {
         Serial.print("Set color to");
         Serial.println(lamp->color);*/
 
-        if (lamp.animI == lamp.endTick) {
+        if (lights[i].animI == lights[i].endTick) {
             uint8_t minR = (animationSetting1 >> 24) & 0xff;
             uint8_t maxR = (animationSetting2 >> 24) & 0xff;
             uint8_t minG = (animationSetting1 >> 16) & 0xff;
@@ -118,18 +120,18 @@ void Animations::randomColors() {
             uint8_t minW = animationSetting1 & 0xff;
             uint8_t maxW = animationSetting2 & 0xff;
 
-            lamp.targetR = random(minR, maxR);
-            lamp.targetG = random(minG, maxG);
-            lamp.targetB = random(minB, maxB);
-            lamp.targetW = random(minW, maxW);
+            lights[i].targetR = random(minR, maxR);
+            lights[i].targetG = random(minG, maxG);
+            lights[i].targetB = random(minB, maxB);
+            lights[i].targetW = random(minW, maxW);
 
-            lamp.animI = 0;
-            lamp.endTick = random(animationSetting3, animationSetting4);
+            lights[i].animI = 0;
+            lights[i].endTick = random(animationSetting3, animationSetting4);
 
-            lamp.startR = r;
-            lamp.startG = g;
-            lamp.startB = b;
-            lamp.startW = w;
+            lights[i].startR = r;
+            lights[i].startG = g;
+            lights[i].startB = b;
+            lights[i].startW = w;
         }
     }
 }
@@ -142,8 +144,6 @@ void Animations::setup_randomColors() {
     animationSetting4 = 300;
     for (int i = 0; i < numLeds; i++) {
         //Serial.println("In loop");
-        light lamp = lights[i];
-
         uint8_t minR = (animationSetting1 >> 24) & 0xff;
         uint8_t maxR = (animationSetting2 >> 24) & 0xff;
         uint8_t minG = (animationSetting1 >> 16) & 0xff;
@@ -154,21 +154,20 @@ void Animations::setup_randomColors() {
         uint8_t maxW = animationSetting2 & 0xff;
         //Serial.println("Grabbed max and min");
 
-        lamp.targetR = random(minR, maxR);
-        lamp.targetG = random(minG, maxG);
-        lamp.targetB = random(minB, maxB);
-        lamp.targetW = random(minW, maxW);
+        lights[i].targetR = random(minR, maxR);
+        lights[i].targetG = random(minG, maxG);
+        lights[i].targetB = random(minB, maxB);
+        lights[i].targetW = random(minW, maxW);
 
-        lamp.animI = 0;
-        lamp.endTick = random(animationSetting3,
-                               animationSetting4); //Between 3 and 30 seconds. TODO add animationSetting3 and 4 for this.
+        lights[i].animI = 0;
+        lights[i].endTick = random(animationSetting3, animationSetting4);
         //Serial.print("EndTick = ");
         //Serial.println(lamp->endTick);
 
-        lamp.startR = (lamp.color >> 16) & 0xff;
-        lamp.startG = (lamp.color >> 8) & 0xff;
-        lamp.startB = lamp.color & 0xff;
-        lamp.startW = (lamp.color >> 24) & 0xff;
+        lights[i].startR = (lights[i].color >> 16) & 0xff;
+        lights[i].startG = (lights[i].color >> 8) & 0xff;
+        lights[i].startB = lights[i].color & 0xff;
+        lights[i].startW = (lights[i].color >> 24) & 0xff;
         /*Serial.println("New target: ");
         Serial.println(lamp->targetR);
         Serial.println(lamp->targetG);

@@ -27,6 +27,8 @@ int numClusters = 0;
 int occupiedLamps[NUM_LEDS];
 int numOccupiedLamps = 0;
 
+bool extShow = false;
+
 //LightCluster myCluster(lampsInCluster1, 7, 0, Animations(lampsInCluster1));
 
 void updateOccupiedLamps() {
@@ -142,6 +144,7 @@ void setupServer() {
             auto newLightCluster = new LightCluster(newLights, newNumLights, doc["clusters"][i]["animation"], newAnimationObject);
             clusters[i] = newLightCluster;
             numClusters = numNewClusters;
+            extShow = true;
 
             updateOccupiedLamps();
 
@@ -201,6 +204,7 @@ void setupServer() {
         int cluster = doc["targetCluster"];
         int value = doc["animation"];
         clusters[cluster]->changeAnimation(value);
+        extShow = true;
 
         AsyncResponseStream *response = request->beginResponseStream("text/plain");
         response->addHeader("Access-Control-Allow-Origin","*");
@@ -251,6 +255,7 @@ void setupServer() {
             auto newLightCluster = new LightCluster(newLights, numLights, 0, newAnimationObject);
             clusters[numClusters] = newLightCluster;
             numClusters++;
+            extShow = true;
         }
 
         updateOccupiedLamps();
@@ -277,12 +282,16 @@ void setupServer() {
         int targetCluster = doc["cluster"];
         for (int i = 0; i < numClusters; i++) {
             if (i == targetCluster) {
+                for (int lamp = 0; lamp < clusters[i]->numLights; lamp++) {
+                    leds.setPixelColor(clusters[i]->animationObject->lights[lamp].mapped, 0);
+                }
                 delete clusters[i];
             }
             if (i > targetCluster) {
                 clusters[i-1] = clusters[i];
             }
         }
+        extShow = true;
         numClusters--;
 
         updateOccupiedLamps();
@@ -425,11 +434,12 @@ void loop() {
     for (int i = 0; i < numClusters; i++) {
         hasRun = hasRun || clusters[i]->runAnimation();
     }
-    if (hasRun) {
+    if (hasRun || extShow) {
         leds.show();
+        extShow = false;
     }
 
-    Serial.print("Num clusters: ");
+    /*Serial.print("Num clusters: ");
     Serial.println(numClusters);
 
     Serial.print("Num occupied lamps: ");
@@ -445,6 +455,6 @@ void loop() {
             }
             delay(1000);
         }
-    }
+    }*/
     delay(1);
 }
