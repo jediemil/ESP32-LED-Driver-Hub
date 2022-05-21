@@ -6,6 +6,7 @@
 #include <../.pio/libdeps/esp32doit-devkit-v1/AsyncTCP/src/AsyncTCP.h>
 #include "../.pio/libdeps/esp32doit-devkit-v1/ESP Async WebServer/src/ESPAsyncWebServer.h"
 #include "../.pio/libdeps/esp32doit-devkit-v1/ESP Async WebServer/src/AsyncJson.h"
+#include "../.pio/libdeps/esp32doit-devkit-v1/ArduinoJson/src/ArduinoJson/Deserialization/DeserializationError.hpp"
 #include <SPI.h>
 #include <SD.h>
 #include <../.pio/libdeps/esp32doit-devkit-v1/IRremote/src/IRremote.hpp>
@@ -106,9 +107,6 @@ void setupServer() {
         response->addHeader("Access-Control-Allow-Origin","*");
         response->addHeader("Access-Control-Allow-Headers", "Content-Type, data");
         response->addHeader("Access-Control-Allow-Methods", "POST, GET");
-        /*response->addHeader("access-control-allow-credentials", "true");
-        response->addHeader("access-control-allow-origin", "*");
-        response->addHeader("access-control-expose-headers", "");*/
         request->send(response);
     });
 
@@ -130,21 +128,29 @@ void setupServer() {
         int numNewClusters = doc["numClusters"];
         for (int i = 0; i < numNewClusters; i++) {
             int newNumLights = doc["clusters"][i]["numLights"];
-            static light *newLights;
-            newLights = (light*) malloc(newNumLights * sizeof(light));
+            auto newLights = new light[newNumLights];
 
             for (int lamp = 0; lamp < newNumLights; lamp++) {
-                newLights[lamp] = {doc["clusters"][i]["lights"][lamp], 0};
+                int mappedLight = doc["clusters"][i]["lights"][lamp];
+                auto lampa = new light();
+                lampa->mapped = mappedLight;
+                lampa->color = 0;
+                newLights[lamp] = *lampa;
             }
 
-            static auto newAnimationObject = new Animations(newLights);
-            static auto newLightCluster = new LightCluster(newLights, newNumLights, doc["clusters"][i]["animation"], newAnimationObject);
+            auto newAnimationObject = new Animations(newLights);
+            auto newLightCluster = new LightCluster(newLights, newNumLights, doc["clusters"][i]["animation"], newAnimationObject);
             clusters[i] = newLightCluster;
             numClusters = numNewClusters;
 
             updateOccupiedLamps();
 
-            request->send(200, "application/json", "{}");
+            AsyncResponseStream *response = request->beginResponseStream("text/plain");
+            response->addHeader("Access-Control-Allow-Origin","*");
+            response->addHeader("Access-Control-Allow-Headers", "Content-Type, data");
+            response->addHeader("Access-Control-Allow-Methods", "POST, GET");
+            response->setCode(200);
+            request->send(response);
         }
     });
 
@@ -173,7 +179,13 @@ void setupServer() {
         } else if (doc["setting"] == "maxAnimationI") {
             clusters[cluster]->animationObject->maxAnimationI = value;
         }
-        request->send(200, "application/json", "{}");
+
+        AsyncResponseStream *response = request->beginResponseStream("text/plain");
+        response->addHeader("Access-Control-Allow-Origin","*");
+        response->addHeader("Access-Control-Allow-Headers", "Content-Type, data");
+        response->addHeader("Access-Control-Allow-Methods", "POST, GET");
+        response->setCode(200);
+        request->send(response);
     });
 
     server.on("/api/change_animation", HTTP_POST, [](AsyncWebServerRequest *request) {
@@ -189,7 +201,13 @@ void setupServer() {
         int cluster = doc["targetCluster"];
         int value = doc["animation"];
         clusters[cluster]->changeAnimation(value);
-        request->send(200, "application/json", "{}");
+
+        AsyncResponseStream *response = request->beginResponseStream("text/plain");
+        response->addHeader("Access-Control-Allow-Origin","*");
+        response->addHeader("Access-Control-Allow-Headers", "Content-Type, data");
+        response->addHeader("Access-Control-Allow-Methods", "POST, GET");
+        response->setCode(200);
+        request->send(response);
     });
 
     server.on("/api/create_cluster", HTTP_POST, [](AsyncWebServerRequest *request) {
@@ -203,24 +221,38 @@ void setupServer() {
         }
 
         int numLights = doc["numLights"];
-        static light *newLights;
-        newLights = (light*) malloc(numLights * sizeof(light));
 
+        bool containsOccupiedLamp = false;
         for (int i = 0; i < numLights; i++) {
             int mappedLight = doc["lights"][i];
-            if (occupiedLamps[mappedLight] < 0) {
-                newLights[i] = {mappedLight, 0};
-            }
+            containsOccupiedLamp = containsOccupiedLamp || occupiedLamps[i] < 0;
         }
 
-        static auto newAnimationObject = new Animations(newLights);
-        static auto newLightCluster = new LightCluster(newLights, numLights, 0, newAnimationObject);
-        clusters[numClusters] = newLightCluster;
-        numClusters++;
+        if (!containsOccupiedLamp) {
+            auto newLights = new light[numLights];
+
+            for (int i = 0; i < numLights; i++) {
+                int mappedLight = doc["lights"][i];
+                auto lamp = new light();
+                lamp->mapped = mappedLight;
+                lamp->color = 0;
+                newLights[i] = *lamp;
+            }
+
+            auto newAnimationObject = new Animations(newLights);
+            auto newLightCluster = new LightCluster(newLights, numLights, 0, newAnimationObject);
+            clusters[numClusters] = newLightCluster;
+            numClusters++;
+        }
 
         updateOccupiedLamps();
 
-        request->send(200, "application/json", "{}");
+        AsyncResponseStream *response = request->beginResponseStream("text/plain");
+        response->addHeader("Access-Control-Allow-Origin","*");
+        response->addHeader("Access-Control-Allow-Headers", "Content-Type, data");
+        response->addHeader("Access-Control-Allow-Methods", "POST, GET");
+        response->setCode(200);
+        request->send(response);
     });
 
     server.on("/api/delete_cluster", HTTP_POST, [](AsyncWebServerRequest *request) {
@@ -233,11 +265,11 @@ void setupServer() {
             return;
         }
 
-        int targetCluster = doc["cluster"];
 
+        int targetCluster = doc["cluster"];
         for (int i = 0; i < numClusters; i++) {
             if (i == targetCluster) {
-                delete[]clusters[i];
+                delete clusters[i];
             }
             if (i > targetCluster) {
                 clusters[i-1] = clusters[i];
@@ -247,7 +279,12 @@ void setupServer() {
 
         updateOccupiedLamps();
 
-        request->send(200, "application/json", "{}");
+        AsyncResponseStream *response = request->beginResponseStream("text/plain");
+        response->addHeader("Access-Control-Allow-Origin","*");
+        response->addHeader("Access-Control-Allow-Headers", "Content-Type, data");
+        response->addHeader("Access-Control-Allow-Methods", "POST, GET");
+        response->setCode(200);
+        request->send(response);
     });
 
     server.on("/api/sync", HTTP_POST, [](AsyncWebServerRequest *request) {
@@ -263,7 +300,13 @@ void setupServer() {
         for (int i = 0; i < numClusters; i++) {
             clusters[i]->animationObject->animationI = 0;
         }
-        request->send(200, "application/json", "{}");
+
+        AsyncResponseStream *response = request->beginResponseStream("text/plain");
+        response->addHeader("Access-Control-Allow-Origin","*");
+        response->addHeader("Access-Control-Allow-Headers", "Content-Type, data");
+        response->addHeader("Access-Control-Allow-Methods", "POST, GET");
+        response->setCode(200);
+        request->send(response);
     });
 }
 
@@ -271,13 +314,17 @@ void setup() {
     // write your initialization code here
     Serial.begin(115200);
 
-    static light allLights[NUM_LEDS];
+    auto allLights = new light[NUM_LEDS];
+
     for (int i = 0; i < NUM_LEDS; i++) {
-        allLights[i] = {i, 0};
+        auto lamp = new light();
+        lamp->mapped = i;
+        lamp->color = 0;
+        allLights[i] = *lamp;
     }
 
-    static auto startAnimationObject = new Animations(allLights);
-    static auto startCluster = new LightCluster(allLights, NUM_LEDS, 0, startAnimationObject);
+    auto startAnimationObject = new Animations(allLights);
+    auto startCluster = new LightCluster(allLights, NUM_LEDS, 0, startAnimationObject);
 
     clusters[0] = startCluster;
     numClusters = 1;
@@ -372,6 +419,15 @@ void loop() {
     }
     if (hasRun) {
         leds.show();
+    }
+
+    if (numClusters > 0) {
+        Serial.println("");
+        for (int i = 0; i < clusters[0]->numLights; i++) {
+            Serial.print("Mapped light: ");
+            Serial.println(clusters[0]->lights[i].mapped);
+        }
+        delay(1000);
     }
     delay(1);
 }

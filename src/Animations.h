@@ -18,7 +18,7 @@ public:
     long animationSetting4;
     int numLeds;
 
-    explicit Animations(struct light *lights);
+    explicit Animations(light *lights);
     void runAnimation(int animationId);
     void runSetup(int animationId);
 

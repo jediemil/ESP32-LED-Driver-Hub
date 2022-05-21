@@ -30,4 +30,7 @@ struct light {
     uint16_t endTick;
 };
 
+typedef light* lightPtr;
+
+
 #endif //UNTITLED_MAIN_H

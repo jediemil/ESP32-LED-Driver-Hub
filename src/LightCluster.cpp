@@ -43,7 +43,7 @@ void LightCluster::changeAnimation(int newAnimationNumber) {
     runAnimation();
 }
 
-LightCluster::LightCluster(struct light *incomingLights, int size, int animation, Animations *animationObject)
+LightCluster::LightCluster(light *incomingLights, int size, int animation, Animations *animationObject)
         : animationObject(animationObject) {
 //    for (int i = 0; i < sizeof(lights); i++) {
 //        light data;
@@ -68,9 +68,8 @@ LightCluster::LightCluster(struct light *incomingLights, int size, int animation
 }
 
 LightCluster::~LightCluster() {
-    delete[] animationObject->lights;
     delete[] lights;
-    delete[] animationObject;
+    delete animationObject;
 }
 
 bool LightCluster::shouldRun() {
