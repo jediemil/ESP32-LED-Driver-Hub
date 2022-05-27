@@ -25,13 +25,15 @@ public:
     //void createLookup();
 
     typedef void (Animations::*method_function)();
-    method_function animationPointer[3] = {&Animations::static_color, &Animations::rainbow, &Animations::randomColors};
-    method_function setupPointer[3] = {&Animations::setup_static_color, &Animations::setup_rainbow, &Animations::setup_randomColors};
+    method_function animationPointer[4] = {&Animations::static_color, &Animations::rainbow, &Animations::randomColors, &Animations::stardust};
+    method_function setupPointer[4] = {&Animations::setup_static_color, &Animations::setup_rainbow, &Animations::setup_randomColors, &Animations::setup_stardust};
 
     struct light *lights;
 
 
 private:
+    void setColorFromTarget(light *lamp);
+
     void rainbow();
     void setup_rainbow();
 
@@ -40,6 +42,9 @@ private:
 
     void randomColors();
     void setup_randomColors();
+
+    void stardust();
+    void setup_stardust();
 };
 
 

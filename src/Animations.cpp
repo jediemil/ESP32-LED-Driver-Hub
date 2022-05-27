@@ -176,3 +176,30 @@ void Animations::setup_randomColors() {
         Serial.println("");*/
     }
 }
+
+
+void Animations::stardust() {
+    for (int i = 0; i < numLeds; i++) {
+        lights[i].animI++;
+
+        setColorFromTarget(&lights[i]);
+
+        if (lights[i].animI == lights[i].endTick) {
+            //if bright make light target off
+            //if off make light target off or bright random
+        }
+    }
+}
+
+void Animations::setup_stardust() {
+
+}
+
+
+void Animations::setColorFromTarget(light *lamp) {
+    uint32_t r = (lamp->targetR - lamp->startR) * lamp->animI / lamp->endTick + lamp->startR;
+    uint32_t g = (lamp->targetG - lamp->startG) * lamp->animI / lamp->endTick + lamp->startG;
+    uint32_t b = (lamp->targetB - lamp->startB) * lamp->animI / lamp->endTick + lamp->startB;
+    uint32_t w = (lamp->targetW - lamp->startW) * lamp->animI / lamp->endTick + lamp->startW;
+    lamp->color = w << 24 | r << 16 | g << 8 | b;
+}

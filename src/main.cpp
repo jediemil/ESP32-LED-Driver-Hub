@@ -100,6 +100,13 @@ void setupServer() {
         for (int cluster = 0; cluster < numClusters; cluster++) { //    TODO: Send settings too
             json["clusters"][cluster]["numLights"] = clusters[cluster]->numLights;
             json["clusters"][cluster]["animation"] = clusters[cluster]->animationNumber;
+
+            json["clusters"][cluster]["animationSetting1"] = clusters[cluster]->animationObject->animationSetting1;
+            json["clusters"][cluster]["animationSetting2"] = clusters[cluster]->animationObject->animationSetting2;
+            json["clusters"][cluster]["animationSetting3"] = clusters[cluster]->animationObject->animationSetting3;
+            json["clusters"][cluster]["animationSetting4"] = clusters[cluster]->animationObject->animationSetting4;
+            json["clusters"][cluster]["delayTime"] = clusters[cluster]->animationObject->delayTimeMS;
+
             json["clusters"][cluster]["lights"] = DynamicJsonDocument(1024);
             for (int lamp = 0; lamp < clusters[cluster]->numLights; lamp++) {
                 json["clusters"][cluster]["lights"][lamp] = clusters[cluster]->lights[lamp].mapped;
@@ -168,19 +175,22 @@ void setupServer() {
         }
 
         int cluster = doc["targetCluster"];
-        long long value = doc["newValue"];
-        if (doc["setting"] == "delayTime") {
-            clusters[cluster]->animationObject->delayTimeMS = value;
-        } else if (doc["setting"] == "animationSetting1") {
-            clusters[cluster]->animationObject->animationSetting1 = value;
-        } else if (doc["setting"] == "animationSetting2") {
-            clusters[cluster]->animationObject->animationSetting2 = value;
-        } else if (doc["setting"] == "animationSetting3") {
-            clusters[cluster]->animationObject->animationSetting3 = value;
-        } else if (doc["setting"] == "animationSetting4") {
-            clusters[cluster]->animationObject->animationSetting4 = value;
-        } else if (doc["setting"] == "maxAnimationI") {
-            clusters[cluster]->animationObject->maxAnimationI = value;
+        if (cluster) {
+            long long value = doc["newValue"];
+            if (doc["setting"] == "delayTime") {
+                clusters[cluster]->animationObject->delayTimeMS = value;
+            } else if (doc["setting"] == "animationSetting1") {
+                clusters[cluster]->animationObject->animationSetting1 = value;
+            } else if (doc["setting"] == "animationSetting2") {
+                clusters[cluster]->animationObject->animationSetting2 = value;
+            } else if (doc["setting"] == "animationSetting3") {
+                clusters[cluster]->animationObject->animationSetting3 = value;
+            } else if (doc["setting"] == "animationSetting4") {
+                clusters[cluster]->animationObject->animationSetting4 = value;
+            } else if (doc["setting"] == "maxAnimationI") {
+                clusters[cluster]->animationObject->maxAnimationI = value;
+            }
+            extShow = true;
         }
 
         AsyncResponseStream *response = request->beginResponseStream("text/plain");

@@ -19,6 +19,9 @@ private:
 public:
     int numLights;
     int animationNumber;
+    uint32_t maxBrightness;
+    bool useMaxBrightness;
+    uint8_t brightness = 255;
 
     bool runAnimation();
     void changeAnimation(int newAnimationNumber);
