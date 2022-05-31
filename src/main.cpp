@@ -445,7 +445,9 @@ void loop() {
         hasRun = hasRun || clusters[i]->runAnimation();
     }
     if (hasRun || extShow) {
+        noInterrupts();
         leds.show();
+        interrupts();
         extShow = false;
     }
 
