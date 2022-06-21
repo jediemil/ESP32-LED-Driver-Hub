@@ -19,7 +19,7 @@ private:
 public:
     int numLights;
     int animationNumber;
-    uint32_t maxBrightness;
+    uint32_t maxBrightness; //TODO: Make this work
     bool useMaxBrightness;
     uint8_t brightness = 255;
 
