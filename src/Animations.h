@@ -9,14 +9,14 @@
 
 class Animations {
 public:
-    int animationI;
-    int maxAnimationI;
-    int delayTimeMS;
+    u_int animationI;
+    u_int maxAnimationI;
+    u_int delayTimeMS;
     long long animationSetting1;
     long long animationSetting2;
-    long animationSetting3;
-    long animationSetting4;
-    int numLeds;
+    u_long animationSetting3;
+    u_long animationSetting4;
+    u_int numLeds;
 
     explicit Animations(light *lights);
     void runAnimation(int animationId);
@@ -45,6 +45,9 @@ private:
 
     void stardust();
     void setup_stardust();
+
+    void twinkle();
+    void setup_twinkle();
 };
 
 

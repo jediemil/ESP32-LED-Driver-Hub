@@ -28,6 +28,8 @@ struct light {
 
     uint16_t animI;
     uint16_t endTick;
+
+    uint8_t state;
 };
 
 typedef light* lightPtr;
