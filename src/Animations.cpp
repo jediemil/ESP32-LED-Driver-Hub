@@ -41,6 +41,25 @@ void Animations::runSetup(int animationID) {
     //}
 }
 
+void Animations::clearLights() {
+    for (int i = 0; i < numLeds; i++) {
+        lights[i].animI = 0;
+        lights[i].endTick = 0;
+        lights[i].state = 0;
+        lights[i].color = 0;
+
+        lights[i].targetR = 0;
+        lights[i].targetG = 0;
+        lights[i].targetB = 0;
+        lights[i].targetW = 0;
+
+        lights[i].startR = 0;
+        lights[i].startG = 0;
+        lights[i].startB = 0;
+        lights[i].startW = 0;
+    }
+}
+
 
 void Animations::static_color() {
     for (int light = 0; light < numLeds; light++) {
@@ -49,6 +68,7 @@ void Animations::static_color() {
 }
 
 void Animations::setup_static_color() {
+    clearLights();
     delayTimeMS = 10000;
     animationSetting1 = 0;
     for (int light = 0; light < numLeds; light++) {
@@ -77,11 +97,11 @@ void Animations::rainbow() {
 }
 
 void Animations::setup_rainbow() {
+    clearLights();
     animationI = 0;
     delayTimeMS = 100;
     maxAnimationI = 256;
     animationSetting1 = 65536 / (numLeds + 1);
-
 }
 
 
@@ -137,6 +157,7 @@ void Animations::randomColors() {
 }
 
 void Animations::setup_randomColors() {
+    clearLights();
     delayTimeMS = 100;
     animationSetting1 = 0x00000000;
     animationSetting2 = 0xFFFFFFFF;
@@ -182,60 +203,78 @@ void Animations::stardust() {
     for (int i = 0; i < numLeds; i++) {
         lights[i].animI++;
 
-        setColorFromTarget(&lights[i]);
+        //setColorFromTarget(&lights[i]);
 
-        /*uint32_t r = (lights[i].targetR - lights[i].startR) * lights[i].animI / lights[i].endTick + lights[i].startR;
+        uint32_t r = (lights[i].targetR - lights[i].startR) * lights[i].animI / lights[i].endTick + lights[i].startR;
         uint32_t g = (lights[i].targetG - lights[i].startG) * lights[i].animI / lights[i].endTick + lights[i].startG;
         uint32_t b = (lights[i].targetB - lights[i].startB) * lights[i].animI / lights[i].endTick + lights[i].startB;
         uint32_t w = (lights[i].targetW - lights[i].startW) * lights[i].animI / lights[i].endTick + lights[i].startW;
         //Serial.println("After main calc");
 
-        lights[i].color = w << 24 | r << 16 | g << 8 | b;*/
+        lights[i].color = w << 24 | r << 16 | g << 8 | b;
 
         if (lights[i].animI == lights[i].endTick) {
             if (lights[i].state == 0) { //If light has finished dim up
                 lights[i].state = 1; //Dim down
+
+                lights[i].startR = lights[i].targetR;
+                lights[i].startG = lights[i].targetG;
+                lights[i].startB = lights[i].targetB;
+                lights[i].startW = lights[i].targetW;
+
                 lights[i].targetR = 0;
                 lights[i].targetG = 0;
                 lights[i].targetB = 0;
                 lights[i].targetW = 0;
+
                 lights[i].endTick = random(animationSetting3 & 0xffff, (animationSetting3 >> 16) & 0xffff);
                 lights[i].animI = 0;
                 //Serial.println("Fading down");
             } else if (lights[i].state == 1) {
                 lights[i].state = 2; //Wait
+
+                lights[i].startR = 0;
+                lights[i].startG = 0;
+                lights[i].startB = 0;
+                lights[i].startW = 0;
+
                 lights[i].endTick = random(animationSetting1, animationSetting2);
                 lights[i].animI = 0;
                 //Serial.println("Waiting");
             } else if (lights[i].state == 2) {
                 uint32_t newColor = Adafruit_NeoPixel::ColorHSV(random(0, 65535), random(240, 255), random(180, 255));
                 lights[i].state = 0; //Dim up
+
                 lights[i].targetR = (newColor >> 16) & 0xff;
                 lights[i].targetG = (newColor >> 8) & 0xff;
                 lights[i].targetB = newColor & 0xff;
                 lights[i].targetW = random(0, 30);
+
                 lights[i].endTick = animationSetting4;
                 lights[i].animI = 0;
-                //Serial.println("Set new color");
+                /*Serial.println("Set new color, target: ");
+                Serial.println(lights[i].targetR);
+                Serial.println(lights[i].targetG);
+                Serial.println(lights[i].targetB);
+                Serial.println(lights[i].targetW);
+                Serial.println("Done");*/
             }
         }
     }
+    //Serial.println(lights[0].animI);
+    //Serial.println(lights[0].color);
 }
 
 void Animations::setup_stardust() {
-    delayTimeMS = 50;
-    animationSetting1 = 50; //Wait time start
-    animationSetting2 = 300; //Wait time end
-    animationSetting3 = (10 << 16) + 300; //Fade down time
-    animationSetting4 = 2; //Fade up time
+    clearLights();
+    delayTimeMS = 20;
+    animationSetting1 = 200; //Wait time start
+    animationSetting2 = 500; //Wait time end
+    animationSetting3 = (30 << 16) + 100; //Fade down time
+    animationSetting4 = 5; //Fade up time
     for (int i = 0; i < numLeds; i++) {
-        lights[i].state = 1;
-        lights[i].targetR = 0;
-        lights[i].targetG = 0;
-        lights[i].targetB = 0;
-        lights[i].targetW = 0;
-        lights[i].endTick = random(animationSetting3 & 0xffff, (animationSetting3 >> 16) & 0xffff);
-        lights[i].animI = 0;
+        lights[i].state = 2;
+        lights[i].endTick = random(animationSetting1, animationSetting2);
     }
 
     /*Serial.println(animationSetting3);
@@ -253,6 +292,17 @@ void Animations::twinkle() { //Alike stardust but with background color
 }
 
 void Animations::setup_twinkle() {
+    clearLights();
+
+}
+
+
+void Animations::ripple() { //Börja på ett slumpmässigt ställe i lights och gå frammåt eller bakåt med en ljusstrimma
+
+}
+
+void Animations::setup_ripple() {
+    clearLights();
 
 }
 

@@ -9,14 +9,14 @@
 
 class Animations {
 public:
-    u_int animationI;
-    u_int maxAnimationI;
-    u_int delayTimeMS;
+    int animationI;
+    int maxAnimationI;
+    int delayTimeMS;
     long long animationSetting1;
     long long animationSetting2;
     u_long animationSetting3;
     u_long animationSetting4;
-    u_int numLeds;
+    int numLeds;
 
     explicit Animations(light *lights);
     void runAnimation(int animationId);
@@ -33,6 +33,7 @@ public:
 
 private:
     void setColorFromTarget(light *lamp);
+    void clearLights();
 
     void rainbow();
     void setup_rainbow();
@@ -48,6 +49,9 @@ private:
 
     void twinkle();
     void setup_twinkle();
+
+    void ripple();
+    void setup_ripple();
 };
 
 

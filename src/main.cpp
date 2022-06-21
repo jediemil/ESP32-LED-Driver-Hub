@@ -175,10 +175,11 @@ void setupServer() {
         }
 
         int cluster = doc["targetCluster"];
-        if (cluster) {
+        if (cluster >= 0) {
             long long value = doc["newValue"];
             if (doc["setting"] == "delayTime") {
                 clusters[cluster]->animationObject->delayTimeMS = value;
+                Serial.println(clusters[cluster]->animationObject->delayTimeMS);
             } else if (doc["setting"] == "animationSetting1") {
                 clusters[cluster]->animationObject->animationSetting1 = value;
             } else if (doc["setting"] == "animationSetting2") {
@@ -191,7 +192,10 @@ void setupServer() {
                 clusters[cluster]->animationObject->maxAnimationI = value;
             }
             extShow = true;
+            Serial.println(value);
         }
+
+        Serial.println(cluster);
 
         AsyncResponseStream *response = request->beginResponseStream("text/plain");
         response->addHeader("Access-Control-Allow-Origin","*");

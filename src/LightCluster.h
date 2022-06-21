@@ -17,8 +17,8 @@ private:
     bool shouldRun();
 
 public:
-    u_int numLights;
-    u_int animationNumber;
+    int numLights;
+    int animationNumber;
     uint32_t maxBrightness;
     bool useMaxBrightness;
     uint8_t brightness = 255;
