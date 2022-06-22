@@ -66,6 +66,7 @@ void connectSDCard() {
 
     if (cardType == CARD_NONE){
         Serial.println("No SD card attached");
+        ESP.restart();
         return;
     }
 
@@ -78,6 +79,7 @@ void connectSDCard() {
         Serial.println("SDHC");
     } else {
         Serial.println("UNKNOWN");
+        ESP.restart();
     }
     uint64_t cardSize = SD.cardSize() / (1024 * 1024);
     Serial.printf("SD Card Size: %lluMB\n", cardSize);
@@ -385,6 +387,7 @@ void setup() {
     delay(1000);
     leds.begin();
     leds.clear();
+    leds.show();
 
     Serial.println("Started LEDS");
 
