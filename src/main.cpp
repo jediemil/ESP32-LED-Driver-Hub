@@ -3,6 +3,7 @@
 #include "WiFiPass.h"
 
 #include <WiFi.h>
+//#include <../.pio/libdeps/esp32doit-devkit-v1/AsyncElegantOTA/src/AsyncElegantOTA.h>
 #include <../.pio/libdeps/esp32doit-devkit-v1/AsyncTCP/src/AsyncTCP.h>
 #include "../.pio/libdeps/esp32doit-devkit-v1/ESP Async WebServer/src/ESPAsyncWebServer.h"
 #include "../.pio/libdeps/esp32doit-devkit-v1/ESP Async WebServer/src/AsyncJson.h"
@@ -375,6 +376,7 @@ void setup() {
     delay(250);
 
     setupServer();
+    //AsyncElegantOTA.begin(&server);
     delay(250);
     server.begin();
     Serial.println("\nServer started. Connecting to IR Receiver\n");
