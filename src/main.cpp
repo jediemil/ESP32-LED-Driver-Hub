@@ -60,6 +60,7 @@ void connectWiFi() {
 void connectSDCard() {
     if(!SD.begin()){
         Serial.println("Card Mount Failed");
+        ESP.restart();
         return;
     }
     uint8_t cardType = SD.cardType();
