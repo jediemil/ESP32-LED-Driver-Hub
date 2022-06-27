@@ -1,6 +1,7 @@
 #include "main.h"
 #include "LightCluster.h"
 #include "WiFiPass.h"
+//#include "updater.cpp"
 
 #include <WiFi.h>
 //#include <../.pio/libdeps/esp32doit-devkit-v1/AsyncElegantOTA/src/AsyncElegantOTA.h>
@@ -12,6 +13,11 @@
 #include <SD.h>
 #include <../.pio/libdeps/esp32doit-devkit-v1/IRremote/src/IRremote.hpp>
 #include <../.pio/libdeps/esp32doit-devkit-v1/ArduinoJson/src/ArduinoJson.h>
+#include <Update.h>
+
+
+#define U_PART U_SPIFFS
+size_t content_len;
 
 
 #define IR_RECEIVE_PIN 15
@@ -85,6 +91,41 @@ void connectSDCard() {
     }
     uint64_t cardSize = SD.cardSize() / (1024 * 1024);
     Serial.printf("SD Card Size: %lluMB\n", cardSize);
+}
+
+void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
+    if (!index){
+        Serial.println("Update");
+        content_len = request->contentLength();
+        // if filename includes spiffs, update the spiffs partition
+        int cmd = (filename.indexOf("spiffs") > -1) ? U_PART : U_FLASH;
+
+        if (!Update.begin(UPDATE_SIZE_UNKNOWN, cmd)) {
+            Update.printError(Serial);
+        }
+    }
+
+    if (Update.write(data, len) != len) {
+        Update.printError(Serial);
+    }
+
+    if (final) {
+        AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Please wait while the device reboots");
+        response->addHeader("Refresh", "20");
+        response->addHeader("Location", "/");
+        request->send(response);
+        if (!Update.end(true)){
+            Update.printError(Serial);
+        } else {
+            Serial.println("Update complete");
+            Serial.flush();
+            ESP.restart();
+        }
+    }
+}
+
+void printProgress(size_t prg, size_t sz) {
+    Serial.printf("Progress: %d%%\n", (prg*100)/content_len);
 }
 
 
@@ -343,6 +384,26 @@ void setupServer() {
         response->setCode(200);
         request->send(response);
     });
+
+    server.on("/doUpdate", HTTP_POST,
+               [](AsyncWebServerRequest *request) {},
+               [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data,
+                  size_t len, bool final) {handleDoUpdate(request, filename, index, data, len, final);}
+    );
+    Update.onProgress(printProgress);
+
+    server.on("/reset", HTTP_POST,[](AsyncWebServerRequest *request) {
+        AsyncResponseStream *response = request->beginResponseStream("text/plain");
+        response->addHeader("Access-Control-Allow-Origin","*");
+        response->addHeader("Access-Control-Allow-Headers", "Content-Type, data");
+        response->addHeader("Access-Control-Allow-Methods", "POST, GET");
+        response->setCode(200);
+        request->send(response);
+
+        delay(500);
+
+        ESP.restart();
+    });
 }
 
 void setup() {
@@ -376,7 +437,6 @@ void setup() {
     delay(250);
 
     setupServer();
-    //AsyncElegantOTA.begin(&server);
     delay(250);
     server.begin();
     Serial.println("\nServer started. Connecting to IR Receiver\n");
