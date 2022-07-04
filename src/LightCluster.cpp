@@ -5,8 +5,8 @@
 #include "LightCluster.h"
 #include "main.h"
 
-bool LightCluster::runAnimation() {
-    if (shouldRun()) {
+bool LightCluster::runAnimation(bool force = false) {
+    if (shouldRun() || force) {
         //Serial.println("Animation begin");
         //delay(100);
         animationObject->runAnimation(animationNumber);

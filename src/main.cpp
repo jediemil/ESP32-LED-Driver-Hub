@@ -625,7 +625,7 @@ void loop() {
 
     bool hasRun = false;
     for (int i = 0; i < numClusters; i++) {
-        hasRun = hasRun || clusters[i]->runAnimation();
+        hasRun = hasRun || clusters[i]->runAnimation(extShow);
     }
     if (hasRun || extShow) {
         noInterrupts();

@@ -23,7 +23,7 @@ public:
     bool useMaxBrightness;
     uint8_t brightness = 255;
 
-    bool runAnimation();
+    bool runAnimation(bool force);
     void changeAnimation(int newAnimationNumber);
 
     LightCluster(light *incomingLights, int size, int animation, Animations *animationObject);

@@ -1,0 +1,1 @@
+curl -F 'update=@.pio/build/esp32doit-devkit-v1/firmware.bin' http://192.168.1.170/admin/doUpdate
