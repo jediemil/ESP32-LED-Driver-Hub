@@ -4,7 +4,6 @@
 //#include "updater.cpp"
 
 #include <WiFi.h>
-//#include <../.pio/libdeps/esp32doit-devkit-v1/AsyncElegantOTA/src/AsyncElegantOTA.h>
 #include <../.pio/libdeps/esp32doit-devkit-v1/AsyncTCP/src/AsyncTCP.h>
 #include "../.pio/libdeps/esp32doit-devkit-v1/ESP Async WebServer/src/ESPAsyncWebServer.h"
 #include "../.pio/libdeps/esp32doit-devkit-v1/ESP Async WebServer/src/AsyncJson.h"
@@ -13,9 +12,8 @@
 #include <SD.h>
 #include <../.pio/libdeps/esp32doit-devkit-v1/IRremote/src/IRremote.hpp>
 #include <../.pio/libdeps/esp32doit-devkit-v1/ArduinoJson/src/ArduinoJson.h>
+
 #include <Update.h>
-
-
 #define U_PART U_SPIFFS
 size_t content_len;
 
@@ -99,7 +97,6 @@ void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size
         content_len = request->contentLength();
         // if filename includes spiffs, update the spiffs partition
         int cmd = (filename.indexOf("spiffs") > -1) ? U_PART : U_FLASH;
-
         if (!Update.begin(UPDATE_SIZE_UNKNOWN, cmd)) {
             Update.printError(Serial);
         }
@@ -386,9 +383,9 @@ void setupServer() {
     });
 
     server.on("/doUpdate", HTTP_POST,
-               [](AsyncWebServerRequest *request) {},
-               [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data,
-                  size_t len, bool final) {handleDoUpdate(request, filename, index, data, len, final);}
+              [](AsyncWebServerRequest *request) {},
+              [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data,
+                 size_t len, bool final) {handleDoUpdate(request, filename, index, data, len, final);}
     );
     Update.onProgress(printProgress);
 
