@@ -17,6 +17,7 @@
 #define U_PART U_SPIFFS
 size_t content_len;
 
+String sdCursor = "/";
 
 #define IR_RECEIVE_PIN 15
 
@@ -108,7 +109,7 @@ void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size
 
     if (final) {
         AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Please wait while the device reboots");
-        response->addHeader("Refresh", "20");
+        response->addHeader("Refresh", "10");
         response->addHeader("Location", "/");
         request->send(response);
         if (!Update.end(true)){
@@ -123,6 +124,89 @@ void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size
 
 void printProgress(size_t prg, size_t sz) {
     Serial.printf("Progress: %d%%\n", (prg*100)/content_len);
+}
+
+
+void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+    String logmessage = "Client:" + request->client()->remoteIP().toString() + " " + request->url();
+    Serial.println(logmessage);
+
+    if (!index) {
+        logmessage = "Upload Start: " + String(filename);
+
+        String storeLocation = sdCursor + "/" + filename;
+
+        if (filename.endsWith(".js")) {
+            storeLocation = "/js/" + filename;
+        } else if (filename.endsWith(".css")) {
+            storeLocation = "/css/" + filename;
+        } else if (filename.endsWith(".html")) {
+            storeLocation = "/" + filename;
+        }
+
+        // open the file on first call and store the file handle in the request object
+        if (SD.exists(storeLocation)) {
+            SD.remove(storeLocation);
+        }
+        request->_tempFile = SD.open(storeLocation, "w");
+        Serial.println(logmessage);
+    }
+
+    if (len) {
+        // stream the incoming chunk to the opened file
+        request->_tempFile.write(data, len);
+        logmessage = "Writing file: " + String(filename) + " index=" + String(index) + " len=" + String(len);
+        Serial.println(logmessage);
+    }
+
+    if (final) {
+        logmessage = "Upload Complete: " + String(filename) + ",size: " + String(index + len);
+        // close the file handle as the upload is now done
+        request->_tempFile.close();
+        Serial.println(logmessage);
+        request->redirect("/");
+    }
+}
+
+String humanReadableSize(const size_t bytes) {
+    if (bytes < 1024) return String(bytes) + " B";
+    else if (bytes < (1024 * 1024)) return String(bytes / 1024.0) + " KB";
+    else if (bytes < (1024 * 1024 * 1024)) return String(bytes / 1024.0 / 1024.0) + " MB";
+    else return String(bytes / 1024.0 / 1024.0 / 1024.0) + " GB";
+}
+
+String listFiles(bool ishtml) {
+    String returnText = "";
+    Serial.println("Listing files stored on SD");
+    File root = SD.open(sdCursor);
+    //Serial.println(root.name());
+    File foundfile = root.openNextFile();
+    //Serial.println(foundfile.name());
+    if (ishtml) {
+        returnText += "<table><tr><th align='left'>Name</th><th align='left'>Size</th><th></th><th></th></tr>";
+    }
+    while (foundfile) {
+        Serial.println(foundfile.name());
+        if (ishtml) {
+            if (foundfile.isDirectory()) {
+                returnText += "<tr align='left'><td>" + String(foundfile.name()) + "</td><td>" + humanReadableSize(foundfile.size()) + "</td>";
+                returnText += "<td><button onclick=\"openDirectory(\'" + String(foundfile.name()) + "\')\">Open directory</button></tr>"; //<button onclick=\"deleteFile(\'" + String(foundfile.name()) + "\')\">Delete directory</button></tr>";
+            } else {
+                returnText += "<tr align='left'><td>" + String(foundfile.name()) + "</td><td>" + humanReadableSize(foundfile.size()) + "</td>";
+                returnText += "<td><button onclick=\"deleteFile(\'" + String(foundfile.name()) + "\')\">Delete</button></tr>";
+            }
+        } else {
+            returnText += "File: " + String(foundfile.name()) + " Size: " + humanReadableSize(foundfile.size()) + "\n";
+        }
+        foundfile.close();
+        foundfile = root.openNextFile();
+    }
+    if (ishtml) {
+        returnText += "</table>";
+    }
+    foundfile.close();
+    root.close();
+    return returnText;
 }
 
 
@@ -382,14 +466,45 @@ void setupServer() {
         request->send(response);
     });
 
-    server.on("/doUpdate", HTTP_POST,
+    server.on("/admin/doUpdate", HTTP_POST,
               [](AsyncWebServerRequest *request) {},
               [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data,
-                 size_t len, bool final) {handleDoUpdate(request, filename, index, data, len, final);}
-    );
+                 size_t len, bool final) {
+        handleDoUpdate(request, filename, index, data, len, final);
+    });
     Update.onProgress(printProgress);
 
-    server.on("/reset", HTTP_POST,[](AsyncWebServerRequest *request) {
+    server.on("/admin/upload_file", HTTP_POST, [](AsyncWebServerRequest *request) {
+        request->send(200);
+    }, handleUpload);
+
+    server.on("/admin/listfiles", HTTP_GET, [](AsyncWebServerRequest * request) {
+        request->send(200, "text/plain", listFiles(true));
+    });
+
+    server.on("/admin/del_file", HTTP_POST, [](AsyncWebServerRequest * request) {
+        const char *fileName = request->getHeader("name")->value().c_str();
+
+        if (!SD.exists( fileName)) {
+            request->send(400, "text/plain", "ERROR: file does not exist");
+        } else {
+            File file = SD.open(fileName);
+            Serial.println(file.name());
+            SD.remove(fileName);
+            request->send(200, "text/plain", "Deleted File: " + String(fileName));
+        }
+    });
+
+    server.on("/admin/set_sd_cursor", HTTP_POST, [](AsyncWebServerRequest * request) {
+        sdCursor = request->getHeader("value")->value().c_str();
+        request->send(200, "text/plain", "");
+    });
+
+    server.on("/admin/get_sd_cursor", HTTP_GET, [](AsyncWebServerRequest * request) {
+        request->send(200, "text/plain", sdCursor);
+    });
+
+    server.on("/admin/reset", HTTP_POST,[](AsyncWebServerRequest *request) {
         AsyncResponseStream *response = request->beginResponseStream("text/plain");
         response->addHeader("Access-Control-Allow-Origin","*");
         response->addHeader("Access-Control-Allow-Headers", "Content-Type, data");
@@ -447,6 +562,7 @@ void setup() {
     delay(1000);
     leds.begin();
     leds.clear();
+    //leds.setPixelColor(1, 255);
     leds.show();
 
     Serial.println("Started LEDS");
